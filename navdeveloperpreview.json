@@ -15,11 +15,26 @@
                 "Description": "Specify VM Admin user name"
             }
         },
-        "adminPassword": {
+        "navAdminUsername": {
+          "type": "string",
+          "defaultValue": "admin",
+          "metadata": {
+            "Description": "Specify NAV Administrator user name"
+          }
+        },
+            "adminPassword": {
             "type": "securestring",
             "metadata": {
                 "Description": "Specify VM Admin Password"
             }
+        },
+        "country": {
+          "type": "string",
+          "defaultValue": "W1",
+          "allowedValues": [ "W1", "US", "CA", "GB" ],
+          "metadata": {
+            "Description": "Select the Country version to deploy"
+          }
         }
     },
     "variables": {
@@ -277,7 +292,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\"  -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\"')]"
         },
         "protectedSettings": {
         }

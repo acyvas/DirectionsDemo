@@ -1,8 +1,12 @@
 #usage initialize.ps1
 param
 (
-       [string]$scriptPath = "",
-       [string]$adminUser = ""
+       [string]$templateLink     = "https://raw.githubusercontent.com/NAVDEMO/DOCKER/master/navdeveloperpreview.json",
+       [string]$vmAdminUsername  = "vmadmin",
+       [string]$navAdminUsername = "admin",
+       [string]$adminPassword    = "P@ssword1",
+       [string]$country          = "us",
+       [string]$dnsName          = ""
 )
 
 function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
@@ -23,16 +27,30 @@ New-Item -Path "C:\DEMO" -ItemType Directory
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 
 Log("Starting initialization")
-Log("ScriptPath: $scriptPath")
+Log("TemplateLink: $templateLink")
 
-$baseUrl = $scriptPath.SubString(0,$scriptPath.LastIndexOf('/')+1)
+$scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 $setupScript = "c:\demo\setup.ps1"
-DownloadFile -SourceUrl "${baseUrl}setup.ps1" -destinationFile $setupScript
+DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
 
-$imageName = "navdocker.azurecr.io/dynamics-nav:devpreview"
-Log "pull $imageName"
-docker login navdocker.azurecr.io -u 7cc3c660-fc3d-41c6-b7dd-dd260148fff7 -p G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU=
-docker pull $imageName
+$registry = "navdocker.azurecr.io"
+docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
+
+$pullImages = @( "dynamics-nav-generic:latest", "dynamics-nav:devpreview")
+$country = $country.ToLowerInvariant()
+if ($country -ne "w1") {
+    $pullImages += "dynamics-nav:devpreview-$country"
+}
+$pullImages | % {
+    Log "pull $registry/$_"
+    docker pull "$registry/$_"
+}
+
+('$imageName = "'+$registry + '/' + $pullImages[$pullImages.Length-1] + '"') | Set-Content "c:\demo\settings.ps1"
+('$dnsName = "' + $dnsName + '"')                                            | Add-Content "c:\demo\settings.ps1"
+('$navAdminUsername = "' + $navAdminUsername + '"')                          | Add-Content "c:\demo\settings.ps1"
+('$adminPassword = "' + $adminPassword + '"')                                | Add-Content "c:\demo\settings.ps1"
+('$country = "' + $country + '"')                                            | Add-Content "c:\demo\settings.ps1"
 
 Log "Register Setup Task"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
