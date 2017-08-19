@@ -124,4 +124,6 @@ Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 #Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
 
 # Remove Scheduled Task
-schtasks /DELETE /TN setupScript /F
+if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
+    schtasks /DELETE /TN setupScript /F
+}

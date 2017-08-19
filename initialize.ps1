@@ -36,15 +36,14 @@ DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
-$pullImages = @( "dynamics-nav-generic:latest", "dynamics-nav:devpreview")
+$pullImage = "dynamics-nav:devpreview"
 $country = $country.ToLowerInvariant()
 if ($country -ne "w1") {
-    $pullImages += "dynamics-nav:devpreview-$country"
+    $pullImage += "-$country"
 }
-$pullImages | % {
-    Log "pull $registry/$_"
-    docker pull "$registry/$_"
-}
+
+Log "pull $registry/$pullImage"
+docker pull "$registry/$pullImage"
 
 ('$imageName = "'+$registry + '/' + $pullImages[$pullImages.Length-1] + '"') | Set-Content "c:\demo\settings.ps1"
 ('$hostName = "' + $hostName + '"')                                          | Add-Content "c:\demo\settings.ps1"
