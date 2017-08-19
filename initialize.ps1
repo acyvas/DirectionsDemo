@@ -1,16 +1,17 @@
 #usage initialize.ps1
 param
 (
-       [string]$ScriptPath = ""
+       [string]$scriptPath = "",
+       [string]$adminUser = ""
 )
 
-function Log([string]$line) { ('<font color="Gray">' + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
+function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
     Log("Downloading '$sourceUrl' to '$destinationFile'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
-    Invoke-WebRequest $sourceUrl -OutFile $destinationFile
+    (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
 
 if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
@@ -22,7 +23,13 @@ New-Item -Path "C:\DEMO" -ItemType Directory
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 
 Log("Starting initialization")
-Log("ScriptPath: $ScriptPath")
+Log("ScriptPath: $scriptPath")
 
-$baseUrl = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-DownloadFile("${scriptPath}initialize.ps1", "c:\demo\initialize.ps1")
+$baseUrl = $scriptPath.SubString(0,$scriptPath.LastIndexOf('/')+1)
+$setupScript = "c:\demo\setup.ps1"
+DownloadFile("${baseUrl}setup.ps1", $setupScript)
+
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $adminUser | Out-Null
+Restart-Computer -Force
