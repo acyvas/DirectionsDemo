@@ -33,13 +33,15 @@ if ($servicesUseSSL) {
     $CustomConfig.Save($CustomConfigFile)
 }' | Set-Content -Path "c:\myfolder\SetupConfiguration.ps1"
 
-get-container | Where-Object { $_.Names.Contains("/$containerName") } | Remove-Container -Force
 $containerName = "navserver"
 $useSSL = "Y"
 if ($hostName -eq "") { 
     $hostName = $containerName
     $useSSL = "N"
 }
+
+Log "Remove container (if running)"
+get-container | Where-Object { $_.Names.Contains("/$containerName") } | Remove-Container -Force
 
 Log "Run $imageName"
 $containerId = docker run --env      accept_eula=Y `
