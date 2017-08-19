@@ -1,7 +1,4 @@
-﻿# Remove Scheduled Task
-#schtasks /DELETE /TN setupScript /F
-
-. "c:\demo\settings.ps1"
+﻿. "c:\demo\settings.ps1"
 
 function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
@@ -39,14 +36,14 @@ if ($servicesUseSSL) {
 get-container | Where-Object { $_.Names.Contains("/$containerName") } | Remove-Container -Force
 $containerName = "navserver"
 $useSSL = "Y"
-if ($dnsName -eq "") { 
-    $dnsName = $containerName
+if ($hostName -eq "") { 
+    $hostName = $containerName
     $useSSL = "N"
 }
 
 Log "Run $imageName"
 $containerId = docker run --env      accept_eula=Y `
-                          --hostname $dnsName `
+                          --hostname $hostName `
                           --name     $containerName `
                           --publish  8080:8080 `
                           --publish  80:80 `
@@ -60,7 +57,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --detach `
                           $imageName
 
-if ($containerName -ne $dnsName) {
+if ($containerName -ne $hostName) {
     # Add Container IP Address to Hosts file as NAVSERVER
     Log "Add navserver to hosts file"
     $ipaddress = Get-Container -ContainerIdOrName $containerID | % { $_.NetworkSettings.Networks.Values[0].IPAddress }
@@ -124,3 +121,5 @@ Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 #$codeexe = "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 #Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
 
+# Remove Scheduled Task
+schtasks /DELETE /TN setupScript /F
