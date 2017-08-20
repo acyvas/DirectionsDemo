@@ -178,7 +178,7 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
     schtasks /DELETE /TN setupScript /F | Out-Null
 }
 
-Start-Process "http://aka.ms/moderndevtools"
 Start-Process "http://${hostname}:8080"
+Start-Process "http://aka.ms/moderndevtools"
 
 Log -color Green "Setup Successfully completed"
