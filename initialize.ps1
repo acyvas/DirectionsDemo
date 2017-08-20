@@ -29,30 +29,35 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Log("Starting initialization")
 Log("TemplateLink: $templateLink")
 
-$scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
-$setupScript = "c:\demo\setup.ps1"
-DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
-
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
-$pullImages = @( "dynamics-nav-generic:latest", "dynamics-nav:devpreview")
+$pullImage = "dynamics-nav:devpreview"
 $country = $country.ToLowerInvariant()
 if ($country -ne "w1") {
-    $pullImages += "dynamics-nav:devpreview-$country"
-}
-$pullImages | % {
-    Log "pull $registry/$_"
-    docker pull "$registry/$_"
+    $pullImage += "-$country"
 }
 
-('$imageName = "'+$registry + '/' + $pullImages[$pullImages.Length-1] + '"') | Set-Content "c:\demo\settings.ps1"
-('$hostName = "' + $hostName + '"')                                          | Add-Content "c:\demo\settings.ps1"
-('$navAdminUsername = "' + $navAdminUsername + '"')                          | Add-Content "c:\demo\settings.ps1"
-('$adminPassword = "' + $adminPassword + '"')                                | Add-Content "c:\demo\settings.ps1"
-('$country = "' + $country + '"')                                            | Add-Content "c:\demo\settings.ps1"
+Log "pull $registry/$pullImage"
+docker pull "$registry/$pullImage"
 
-Log "Register Setup Task"
+$setupScript = "c:\demo\setup.ps1"
+$scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
+DownloadFile -SourceUrl "${scriptPath}setup.ps1"     -destinationFile $setupScript
+
+New-Item -Path "C:\DEMO\http" -ItemType Directory
+DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
+DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
+DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
+DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
+
+('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content "c:\demo\settings.ps1"
+('$hostName = "' + $hostName + '"')                   | Add-Content "c:\demo\settings.ps1"
+('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content "c:\demo\settings.ps1"
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content "c:\demo\settings.ps1"
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content "c:\demo\settings.ps1"
+('$country = "' + $country + '"')                     | Add-Content "c:\demo\settings.ps1"
+
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null

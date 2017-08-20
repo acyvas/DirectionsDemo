@@ -1,6 +1,6 @@
 ﻿. "c:\demo\settings.ps1"
 
-function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
+function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
@@ -9,7 +9,30 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
 
-Log "Install Docker PowerShell"
+function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$WorkingDirectory = "", [string]$IconLocation = "", [string]$Arguments = "")
+{
+    $filename = "C:\Users\Public\Desktop\$Name.lnk"
+    if (!(Test-Path -Path $filename)) {
+        $Shell =  New-object -comobject WScript.Shell
+        $Shortcut = $Shell.CreateShortcut($filename)
+        $Shortcut.TargetPath = $TargetPath
+        if (!$WorkingDirectory) {
+            $WorkingDirectory = Split-Path $TargetPath
+        }
+        $Shortcut.WorkingDirectory = $WorkingDirectory
+        if ($Arguments) {
+            $Shortcut.Arguments = $Arguments
+        }
+        if ($IconLocation) {
+            $Shortcut.IconLocation = $IconLocation
+        }
+        $Shortcut.save()
+    }
+}
+
+Log -color Green "Finalizing Setup"
+
+Log "Installing Docker PowerShell"
 if (!(Get-PSRepository -Name DockerPS-Dev -ErrorAction Ignore)) {
     Register-PSRepository -Name DockerPS-Dev -SourceLocation https://ci.appveyor.com/nuget/docker-powershell-dev
 }
@@ -17,9 +40,10 @@ if (!(Get-Module -Name Docker -ErrorAction Ignore)) {
     Install-Module -Name Docker -Repository DockerPS-Dev -Scope AllUsers -Force
 }
 
-# Override SetupConfiguration to not use SSL for Developer Services
 Log "Create myfolder"
 New-Item -Path "c:\myfolder" -ItemType Directory -ErrorAction Ignore | Out-Null
+
+# Override SetupConfiguration to not use SSL for Developer Services
 '. (Join-Path $runPath $MyInvocation.MyCommand.Name)
 if ($servicesUseSSL) {
     # change urlacl reservation for DeveloperService
@@ -32,6 +56,15 @@ if ($servicesUseSSL) {
     $CustomConfig.SelectSingleNode("//appSettings/add[@key=""DeveloperServicesSSLEnabled""]").Value = "false"
     $CustomConfig.Save($CustomConfigFile)
 }' | Set-Content -Path "c:\myfolder\SetupConfiguration.ps1"
+
+# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
+'$wwwRootPath = Get-WWWRootPath
+$httpPath = Join-Path $wwwRootPath "http"
+Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
+if ($hostname -ne "") {
+"full address:s:$hostname:3389
+prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
+}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $containerName = "navserver"
 $useSSL = "Y"
@@ -106,7 +139,7 @@ DownloadFile -SourceUrl "http://navserver:8080/$vsixName" -destinationFile $Vsix
 
 Log "install vsix"
 $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
-& $code @('--install-extension', $VsixFileName) | Log
+& $code @('--install-extension', $VsixFileName) | Out-Null
 
 $username = [Environment]::UserName
 if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
@@ -115,13 +148,36 @@ if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction 
     }
 }
 
+Log "Creating Desktop Shortcuts"
+New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${hostname}/NAV/"                            -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
+New-DesktopShortcut -Name "Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell"
+
+Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 
-#$HelloWorldFolder = ('"'+"C:\Users\$([Environment]::UserName)\Documents\AL\samples\HelloWorld"+'"')
-#$codeexe = "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-#Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
+# Turn off IE Enhanced Security Configuration
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
+
+# Enable File Download in IE
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0
+
+# Enable Font Download in IE
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
 
 # Remove Scheduled Task
-schtasks /DELETE /TN setupScript /F
+if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
+    Log "Remove Scheduled Task"
+    schtasks /DELETE /TN setupScript /F | Out-Null
+}
+
+Start-Process "http://aka.ms/moderndevtools"
+
+Log -color Green "Setup Successfully completed"
