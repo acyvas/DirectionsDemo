@@ -9,6 +9,27 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
 
+function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$WorkingDirectory = "", [string]$IconLocation = "", [string]$Arguments = "")
+{
+    $filename = "C:\Users\Public\Desktop\$Name.lnk"
+    if (!(Test-Path -Path $filename)) {
+        $Shell =  New-object -comobject WScript.Shell
+        $Shortcut = $Shell.CreateShortcut($filename)
+        $Shortcut.TargetPath = $TargetPath
+        if (!$WorkingDirectory) {
+            $WorkingDirectory = Split-Path $TargetPath
+        }
+        $Shortcut.WorkingDirectory = $WorkingDirectory
+        if ($Arguments) {
+            $Shortcut.Arguments = $Arguments
+        }
+        if ($IconLocation) {
+            $Shortcut.IconLocation = $IconLocation
+        }
+        $Shortcut.save()
+    }
+}
+
 Log "Install Docker PowerShell"
 if (!(Get-PSRepository -Name DockerPS-Dev -ErrorAction Ignore)) {
     Register-PSRepository -Name DockerPS-Dev -SourceLocation https://ci.appveyor.com/nuget/docker-powershell-dev
@@ -129,9 +150,9 @@ Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 
-#$HelloWorldFolder = ('"'+"C:\Users\$([Environment]::UserName)\Documents\AL\samples\HelloWorld"+'"')
-#$codeexe = "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-#Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
+New-DesktopShortcut -Name "Landing Page"         -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Visual Studio Code"   -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+New-DesktopShortcut -Name "Web Client"           -TargetPath "https://${hostname}/NAV/"                            -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
