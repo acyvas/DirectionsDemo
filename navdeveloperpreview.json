@@ -30,7 +30,7 @@
         },
         "country": {
           "type": "string",
-          "defaultValue": "W1",
+          "defaultValue": "US",
           "allowedValues": [ "W1", "US", "CA", "GB" ],
           "metadata": {
             "Description": "Select the Country version to deploy"
