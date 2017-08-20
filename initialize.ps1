@@ -29,12 +29,6 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Log("Starting initialization")
 Log("TemplateLink: $templateLink")
 
-Log "Register Setup Task"
-$setupScript = "c:\demo\setup.ps1"
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "$setupScript"
-$trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername -Password $adminPassword | Log
-
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
@@ -44,9 +38,10 @@ if ($country -ne "w1") {
     $pullImage += "-$country"
 }
 
-#Log "pull $registry/$pullImage"
-#docker pull "$registry/$pullImage"
+Log "pull $registry/$pullImage"
+docker pull "$registry/$pullImage"
 
+$setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -SourceUrl "${scriptPath}setup.ps1"     -destinationFile $setupScript
 
@@ -62,6 +57,10 @@ DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\h
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content "c:\demo\settings.ps1"
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content "c:\demo\settings.ps1"
 ('$country = "' + $country + '"')                     | Add-Content "c:\demo\settings.ps1"
+
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
 
 Log "Reboot and run Setup Task"
 Restart-Computer -Force
