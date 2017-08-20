@@ -33,7 +33,7 @@ Log "Register Setup Task"
 $setupScript = "c:\demo\setup.ps1"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "$setupScript"
 $trigger = New-ScheduledTaskTrigger -AtStartup
-Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername -Password $adminPassword | Out-Null
+Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername -Password $adminPassword | Log
 
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
