@@ -1,6 +1,6 @@
 ﻿. "c:\demo\settings.ps1"
 
-function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
+function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
@@ -161,5 +161,8 @@ New-DesktopShortcut -Name "Container PowerShell Prompt"  -TargetPath "CMD.EXE"  
 
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
+    Log "Remove Scheduled Task"
     schtasks /DELETE /TN setupScript /F
 }
+
+Log "Installation Successfully completed"

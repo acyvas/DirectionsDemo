@@ -32,7 +32,7 @@ Log("TemplateLink: $templateLink")
 Log "Register Setup Task"
 $setupScript = "c:\demo\setup.ps1"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "$setupScript"
-$trigger = New-ScheduledTaskTrigger -AtStartup
+$trigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername -Password $adminPassword | Log
 
 $registry = "navdocker.azurecr.io"
