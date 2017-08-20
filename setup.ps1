@@ -74,6 +74,9 @@ if ($hostName -eq "") {
 Log "Remove container (if running)"
 get-container | Where-Object { $_.Names.Contains("/$containerName") } | Remove-Container -Force
 
+$registry = "navdocker.azurecr.io"
+docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
+
 Log "Run $imageName"
 $containerId = docker run --env      accept_eula=Y `
                           --hostname $hostName `
