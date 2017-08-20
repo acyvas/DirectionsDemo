@@ -8,10 +8,27 @@
 
 private XmlDocument customSettings = null;
 
-private string getHost()
+private string getWebBaseUrl()
 {
   GetCustomSettings();
-  var uri = new Uri(customSettings.SelectSingleNode("//appSettings/add[@key='PublicWebBaseUrl']").Attributes["value"].Value);
+  return customSettings.SelectSingleNode("//appSettings/add[@key='PublicWebBaseUrl']").Attributes["value"].Value.ToLowerInvariant();
+}
+
+private string getODataBaseUrl()
+{
+  GetCustomSettings();
+  return customSettings.SelectSingleNode("//appSettings/add[@key='PublicODataBaseUrl']").Attributes["value"].Value.ToLowerInvariant();
+}
+
+private string getSoapBaseUrl()
+{
+  GetCustomSettings();
+  return customSettings.SelectSingleNode("//appSettings/add[@key='PublicSOAPBaseUrl']").Attributes["value"].Value.ToLowerInvariant();
+}
+
+private string getHost()
+{
+  var uri = new Uri(getWebBaseUrl());
   return uri.Host;
 }
 
@@ -23,6 +40,16 @@ private void GetCustomSettings()
     customSettings = new XmlDocument();
     customSettings.Load(dir + @"\Service\CustomSettings.config");
   }
+}
+
+private bool isHttps()
+{
+  return getWebBaseUrl().StartsWith("https://");
+}
+
+private string getProduct()
+{
+  return "Microsoft Dynamics NAV \"Tenerife\" Developer Preview";
 }
 
 private string getCompanyName()
@@ -39,7 +66,7 @@ private string createQrImg(string link, string title, int width = 100, int heigh
 
 private string createQrForLandingPage()
 {
-  return createQrImg(string.Format("http://{0}",getHost()), "Dynamics NAV Developer Preview");
+  return createQrImg("http://"+Request.Url.Host+":"+Request.Url.Port, getProduct());
 }
 
 private string getServerInstance()
@@ -72,7 +99,7 @@ private string getBuildNumber()
 
 <html>
 <head>
-    <title>Microsoft Dynamics NAV Developer Preview</title>
+    <title><%=getProduct() %></title>
     <style type="text/css">
         h1 {
             font-size: 2em;
@@ -189,7 +216,7 @@ function show(selected) {
     <td rowspan="2" width="110"><% =createQrForLandingPage() %></td>
     <td style="vertical-align:bottom">&nbsp;<img src="Microsoft.png" width="108" height="23"></td>
     </tr><tr>
-    <td style="vertical-align:top"><h1>Dynamics NAV Developer Preview</h1><%=getBuildNumber() %></td>
+    <td style="vertical-align:top"><h1><%=getProduct() %></h1><%=getBuildNumber() %></td>
     </tr>
     </table>
     </td>
@@ -202,7 +229,7 @@ function show(selected) {
 %>
     <tr><td colspan="4"><h3>Download Self Signed Certificate</h3></td></tr>
     <tr>
-      <td colspan="2">The Dynamics NAV Developer Preview is secured with a self-signed certificate. In order to connect to the environment, you must trust this certificate. Select operating system and browser to view the process for downloading and trusting the certificate:</td>
+      <td colspan="2">The <%=getProduct() %> is secured with a self-signed certificate. In order to connect to the environment, you must trust this certificate. Select operating system and browser to view the process for downloading and trusting the certificate:</td>
       <td></td>
       <td rowspan="2" style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/Certificate.cer" target="_blank">Download Certificate</a></td>
     </tr>
@@ -243,11 +270,11 @@ function show(selected) {
       if (i == 0) {
         if (rdps.Length > 1) {
 %>
-The NAV Developer Preview contains multiple servers. You can connect to the individual servers by following these links.
+The <%=getProduct() %> contains multiple servers. You can connect to the individual servers by following these links.
 <%
         } else {
 %>
-You can connect to the server in the NAV Developer Preview by following this link.
+You can connect to the server in the <%=getProduct() %> by following this link.
 <%
         }
       }
@@ -281,6 +308,46 @@ You can view the installation status by following this link.
 <%
   }
 %>
+    <tr><td colspan="4"><h3>Access the <%=getProduct() %> using UserName/Password Authentication</h3></td></tr>
+<%
+    if (isHttps()) {
+%>
+    <tr>
+      <td colspan="2">If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to this <%=getProduct() %>, choose this link.</td>
+      <td></td>  
+      <td style="white-space: nowrap"><a href="ms-dynamicsnav://<% =getHost() %>/nav">Configure App</a></td>
+    </tr>
+<%
+    }
+%>
+    <tr>
+      <td colspan="2">Choose these links to access the <%=getProduct() %> using the Web Client.</td>
+      <td></td>  
+      <td><a href="<% =getWebBaseUrl() %>" target="_blank">Web&nbsp;Client</a></td>
+    </tr>
+<%
+    if (Directory.Exists(Server.MapPath(".") + @"\NAV")) {
+%>
+    <tr>
+      <td colspan="2">The <%=getProduct() %> supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
+      <td></td>  
+      <td style="white-space: nowrap"><a href="http://<% =Request.Url.Host+":"+Request.Url.Port %>/NAV" target="_blank">Install Windows Client</a></td>
+    </tr>
+<%
+    }
+%>
+    <tr><td colspan="4"><h3>Access the <%=getProduct() %> using Web Services</h3></td></tr>
+    <tr>
+      <td colspan="2">The <%=getProduct() %> exposes functionality as SOAP web services. Choose this link to view the web services.</td>
+      <td></td>  
+      <td style="white-space: nowrap"><a href="<% =getSoapBaseUrl() %>/services" target="_blank">View SOAP Web Services</a></td>
+    </tr>
+    <tr>
+      <td colspan="2">The <%=getProduct() %> exposes data as restful OData web services. Choose this link to view the web services</td>
+      <td></td>  
+      <td style="white-space: nowrap"><a href="<% =getODataBaseUrl() %>" target="_blank">View OData Web Services</a></td>
+    </tr>
+
     <tr><td colspan="4">&nbsp;</td></tr>
 
   </table>
