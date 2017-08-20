@@ -51,16 +51,16 @@ DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\h
 DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
 DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
 
-('$imageName = "'+$registry + '/' + $pullImages[$pullImages.Length-1] + '"') | Set-Content "c:\demo\settings.ps1"
-('$hostName = "' + $hostName + '"')                                          | Add-Content "c:\demo\settings.ps1"
-('$navAdminUsername = "' + $navAdminUsername + '"')                          | Add-Content "c:\demo\settings.ps1"
-('$adminPassword = "' + $adminPassword + '"')                                | Add-Content "c:\demo\settings.ps1"
-('$country = "' + $country + '"')                                            | Add-Content "c:\demo\settings.ps1"
+('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content "c:\demo\settings.ps1"
+('$hostName = "' + $hostName + '"')                   | Add-Content "c:\demo\settings.ps1"
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content "c:\demo\settings.ps1"
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content "c:\demo\settings.ps1"
+('$country = "' + $country + '"')                     | Add-Content "c:\demo\settings.ps1"
 
 Log "Register Setup Task"
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "$setupScript"
 $trigger = New-ScheduledTaskTrigger -AtStartup
-Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
+Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername -Password $adminPassword | Out-Null
 
 Log "Reboot and run Setup Task"
 Restart-Computer -Force
