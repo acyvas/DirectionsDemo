@@ -179,5 +179,6 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
 }
 
 Start-Process "http://aka.ms/moderndevtools"
+Start-Process "http://${hostname}:8080"
 
 Log -color Green "Setup Successfully completed"
