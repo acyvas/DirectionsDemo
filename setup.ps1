@@ -38,7 +38,10 @@ if ($servicesUseSSL) {
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
 Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
-' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+if ($hostname -ne "") {
+"full address:s:$hostname:3389
+prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
+}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $containerName = "navserver"
 $useSSL = "Y"
