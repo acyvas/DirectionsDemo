@@ -31,7 +31,13 @@ Log("TemplateLink: $templateLink")
 
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 $setupScript = "c:\demo\setup.ps1"
-DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
+DownloadFile -SourceUrl "${scriptPath}setup.ps1"     -destinationFile $setupScript
+
+New-Item -Path "C:\DEMO\http" -ItemType Directory
+DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
+DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
+DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
+DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
 
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
@@ -52,8 +58,8 @@ docker pull "$registry/$pullImage"
 ('$country = "' + $country + '"')                                            | Add-Content "c:\demo\settings.ps1"
 
 Log "Register Setup Task"
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
-$trigger = New-ScheduledTaskTrigger -AtLogOn
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "$setupScript"
+$trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
 
 Log "Reboot and run Setup Task"

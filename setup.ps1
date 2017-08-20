@@ -17,9 +17,10 @@ if (!(Get-Module -Name Docker -ErrorAction Ignore)) {
     Install-Module -Name Docker -Repository DockerPS-Dev -Scope AllUsers -Force
 }
 
-# Override SetupConfiguration to not use SSL for Developer Services
 Log "Create myfolder"
 New-Item -Path "c:\myfolder" -ItemType Directory -ErrorAction Ignore | Out-Null
+
+# Override SetupConfiguration to not use SSL for Developer Services
 '. (Join-Path $runPath $MyInvocation.MyCommand.Name)
 if ($servicesUseSSL) {
     # change urlacl reservation for DeveloperService
@@ -32,6 +33,12 @@ if ($servicesUseSSL) {
     $CustomConfig.SelectSingleNode("//appSettings/add[@key=""DeveloperServicesSSLEnabled""]").Value = "false"
     $CustomConfig.Save($CustomConfigFile)
 }' | Set-Content -Path "c:\myfolder\SetupConfiguration.ps1"
+
+# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
+'$wwwRootPath = Get-WWWRootPath
+$httpPath = Join-Path $wwwRootPath "http"
+Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
+' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $containerName = "navserver"
 $useSSL = "Y"
