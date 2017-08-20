@@ -4,7 +4,7 @@ function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
-    Log("Downloading '$sourceUrl' to '$destinationFile'")
+    Log("Downloading '$sourceUrl'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
@@ -137,7 +137,7 @@ $vsixName = Invoke-Command -Session $session -ScriptBlock {
 $VsixFilename = "c:\demo\al.vsix"
 DownloadFile -SourceUrl "http://navserver:8080/$vsixName" -destinationFile $VsixFilename
 
-Log "install vsix"
+Log "Installing .vsix"
 $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
 & $code @('--install-extension', $VsixFileName) | Out-Null
 
@@ -174,7 +174,6 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet
 
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
-    Log "Remove Scheduled Task"
     schtasks /DELETE /TN setupScript /F | Out-Null
 }
 
