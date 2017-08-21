@@ -52,7 +52,7 @@ DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\h
 DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
 DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
 DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
-if (licenseFileUri -ne "") {
+if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
