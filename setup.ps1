@@ -134,17 +134,25 @@ $vsixName = Invoke-Command -Session $session -ScriptBlock {
     }
     (Get-Item "c:\inetpub\wwwroot\http\*.vsix").Name
 }
-$VsixFilename = "c:\demo\al.vsix"
-DownloadFile -SourceUrl "http://navserver:8080/$vsixName" -destinationFile $VsixFilename
+if ($vsixName -ne "") {
+    $VsixFilename = "c:\demo\al.vsix"
+    DownloadFile -SourceUrl "http://navserver:8080/$vsixName" -destinationFile $VsixFilename
 
-Log "Installing .vsix"
-$code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
-& $code @('--install-extension', $VsixFileName) | Out-Null
+    Log "Installing .vsix"
+    $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
+    & $code @('--install-extension', $VsixFileName) | Out-Null
 
-$username = [Environment]::UserName
-if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
-    if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
-        Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
+    $username = [Environment]::UserName
+    if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
+        if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
+            Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
+        }
+    }
+}
+
+if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
+    Invoke-Command -Session $session -ScriptBlock {
+        Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue
     }
 }
 
