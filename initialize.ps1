@@ -37,7 +37,7 @@ docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5
 $pullImage = "dynamics-nav:$navVersion"
 $country = $country.ToLowerInvariant()
 if ($country -ne "w1") {
-    $pullImage += "-$country"
+    $pullImage += "-fin$country"
 }
 
 Log "pull $registry/$pullImage"
