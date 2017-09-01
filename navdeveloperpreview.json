@@ -31,9 +31,9 @@
         "country": {
           "type": "string",
           "defaultValue": "US",
-          "allowedValues": [ "W1", "US", "CA", "GB" ],
+          "allowedValues": [ "W1", "US", "CA", "GB", "DK" ],
           "metadata": {
-            "Description": "Select the Country version to deploy"
+            "Description": "Select the Country version to deploy (subject to availability)"
           }
         },
         "navVersion": {
