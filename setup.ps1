@@ -52,7 +52,7 @@ if ($servicesUseSSL) {
     $CustomConfig = [xml](Get-Content $CustomConfigFile)
     $CustomConfig.SelectSingleNode("//appSettings/add[@key=""DeveloperServicesSSLEnabled""]").Value = "false"
     $CustomConfig.Save($CustomConfigFile)
-}' | Set-Content -Path "c:\myfolder\SetupConfiguration.ps1"
+}' | Add-Content -Path "c:\myfolder\SetupConfiguration.ps1"
 
 # Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
@@ -61,7 +61,7 @@ Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
 if ($hostname -ne "") {
 "full address:s:$hostname:3389
 prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
-}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+}' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $containerName = "navserver"
 $useSSL = "Y"
