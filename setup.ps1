@@ -160,7 +160,7 @@ New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${h
 New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
-New-DesktopShortcut -Name "Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
+New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
@@ -175,4 +175,4 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
 Start-Process "http://${hostname}:8080"
 Start-Process "http://aka.ms/moderndevtools"
 
-Log -color Green "Setup Successfully completed"
+docker logs navserver | % { log "Container: $_" }
