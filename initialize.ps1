@@ -25,12 +25,21 @@ if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
     exit
 }
 
-New-Item -Path "C:\DEMO" -ItemType Directory
+New-Item -Path "c:\myfolder" -ItemType Directory -ErrorAction Ignore | Out-Null
+New-Item -Path "C:\DEMO" -ItemType Directory -ErrorAction Ignore | Out-Null
+
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 
 Log("Starting initialization")
 Log("TemplateLink: $templateLink")
 
+Log("Upgrade Docker Engine")
+Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
+Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
+Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
+Start-Service docker
+
+Log("Docker Login")
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
@@ -40,12 +49,16 @@ if ($country -ne "w1") {
     $pullImage += "-fin$country"
 }
 
+Log "pull microsoft/windowsservercore"
+docker pull microsoft/windowsservercore
 Log "pull $registry/$pullImage"
-docker pull "$registry/$pullImage"
+docker pull $registry/$pullImage
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
-DownloadFile -SourceUrl "${scriptPath}setup.ps1"     -destinationFile $setupScript
+DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
+DownloadFile -sourceUrl "${scriptPath}AdditionalSetup.ps1" -destinationFile "c:\myfolder\AdditionalSetup.ps1"
+DownloadFile -sourceUrl "${scriptPath}prompt.ps1" -destinationFile "c:\demo\prompt.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"

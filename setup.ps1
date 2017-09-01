@@ -40,9 +40,6 @@ if (!(Get-Module -Name Docker -ErrorAction Ignore)) {
     Install-Module -Name Docker -Repository DockerPS-Dev -Scope AllUsers -Force
 }
 
-Log "Create myfolder"
-New-Item -Path "c:\myfolder" -ItemType Directory -ErrorAction Ignore | Out-Null
-
 # Override SetupConfiguration to not use SSL for Developer Services
 '. (Join-Path $runPath $MyInvocation.MyCommand.Name)
 if ($servicesUseSSL) {
@@ -163,7 +160,7 @@ New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${h
 New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
-New-DesktopShortcut -Name "Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell"
+New-DesktopShortcut -Name "Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
