@@ -48,6 +48,7 @@ $country = $country.ToLowerInvariant()
 if ($country -ne "w1") {
     $pullImage += "-fin$country"
 }
+$imageName = "$registry/$pullImage"
 
 # Turn off IE Enhanced Security Configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
@@ -63,6 +64,8 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet
 
 Log "pull microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
+Log "pull $imageName"
+docker pull $imageName
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
@@ -77,7 +80,7 @@ if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content $setupScript
+('$imageName = "' + $imageName + '"')                 | Set-Content $setupScript
 ('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $setupScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupScript
