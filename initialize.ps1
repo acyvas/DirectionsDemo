@@ -49,10 +49,10 @@ if ($country -ne "w1") {
     $pullImage += "-fin$country"
 }
 
-Log "pull microsoft/windowsservercore"
-docker pull microsoft/windowsservercore
-Log "pull $registry/$pullImage"
-docker pull $registry/$pullImage
+#Log "pull microsoft/windowsservercore"
+#docker pull microsoft/windowsservercore
+#Log "pull $registry/$pullImage"
+#docker pull $registry/$pullImage
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
