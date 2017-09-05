@@ -30,15 +30,7 @@ function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$Workin
     }
 }
 
-Log -color Green "Finalizing Setup"
-
-Log "Installing Docker PowerShell"
-if (!(Get-PSRepository -Name DockerPS-Dev -ErrorAction Ignore)) {
-    Register-PSRepository -Name DockerPS-Dev -SourceLocation https://ci.appveyor.com/nuget/docker-powershell-dev
-}
-if (!(Get-Module -Name Docker -ErrorAction Ignore)) {
-    Install-Module -Name Docker -Repository DockerPS-Dev -Scope AllUsers -Force
-}
+Log -color Green "Using Docker Image $imageName"
 
 # Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
@@ -47,7 +39,7 @@ Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
 if ($hostname -ne "") {
 "full address:s:$hostname:3389
 prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
-}' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $containerName = "navserver"
 $useSSL = "Y"
@@ -56,10 +48,19 @@ if ($hostName -eq "") {
     $useSSL = "N"
 }
 
-Log "Remove container (if running)"
-get-container | Where-Object { $_.Names.Contains("/$containerName") } | Remove-Container -Force
+Log("Docker Login")
+$registry = "navdocker.azurecr.io"
+docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU=" | Out-Null
 
-Log "Run $imageName"
+Log "Docker pull $imageName"
+docker pull $imageName
+
+docker ps --filter name=$containerName -q | % {
+    Log "Remove container $containerName"
+    docker rm $_ -f | Out-Null
+}
+
+Log "Docker Run $imageName"
 $containerId = docker run --env      accept_eula=Y `
                           --hostname $hostName `
                           --name     $containerName `
@@ -75,90 +76,108 @@ $containerId = docker run --env      accept_eula=Y `
                           --detach `
                           $imageName
 
+if ($LastExitCode -ne 0) {
+    throw "Docker run error"
+}
+
+Log "Waiting for container to become healthy, this shouldn't take more than 2 minutes"
+Write-Host -ForegroundColor Gray "Time:          ½              1              ½              2"
+do {
+    Write-Host -NoNewline -ForegroundColor Gray "."
+    Start-Sleep -Seconds 2
+    $status = (docker ps -a --filter Name=$containerName --format '{{.Status}}')
+    $healthy = $status.Contains('healthy')
+} while (!$healthy)
+Write-Host -ForegroundColor Gray "Healthy"
+
 if ($containerName -ne $hostName) {
-    # Add Container IP Address to Hosts file as NAVSERVER
-    Log "Add navserver to hosts file"
-    $ipaddress = Get-Container -ContainerIdOrName $containerID | % { $_.NetworkSettings.Networks.Values[0].IPAddress }
-    " $ipaddress navserver" | Set-Content -Path "c:\windows\system32\drivers\etc\hosts" -Force
+    # Add Container IP Address to Hosts file as $containername
+    Log "Add $containerName to hosts file"
+    $s = docker inspect $containerId
+    $IPAddress = ([string]::Join(" ", $s) | ConvertFrom-Json).NetworkSettings.Networks.nat.IPAddress
+    " $IPAddress $containerName" | Set-Content -Path "c:\windows\system32\drivers\etc\hosts" -Force
 }
 
-$Folder = "C:\DOWNLOAD\VSCode"
-$Filename = "$Folder\VSCodeSetup-stable.exe"
-New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
-if (!(Test-Path $Filename)) {
-    DownloadFile -SourceUrl "https://go.microsoft.com/fwlink/?LinkID=623230" -destinationFile $Filename
-}
-
-Log "Installing Visual Studio Code"
-$setupParameters = “/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
-Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
-
-Log "Download samples"
-$Folder = "C:\DOWNLOAD"
-$Filename = "$Folder\samples.zip"
-New-Item $folder -ItemType Directory -ErrorAction Ignore
-$WebClient = New-Object System.Net.WebClient
-$WebClient.DownloadFile("https://www.github.com/Microsoft/AL/archive/master.zip", $filename)
-Remove-Item -Path "$folder\AL-master" -Force -Recurse -ErrorAction Ignore | Out-null
-[Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
-[System.IO.Compression.ZipFile]::ExtractToDirectory($filename, $folder)
-Copy-Item -Path "$folder\AL-master\*" -Destination $PSScriptRoot -Recurse -Force -ErrorAction Ignore
-
-$alFolder = "C:\Users\$([Environment]::UserName)\Documents\AL"
-Remove-Item -Path "$alFolder\Samples" -Recurse -Force -ErrorAction Ignore | Out-Null
-New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
-Copy-Item -Path (Join-Path $PSScriptRoot "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
-
-# Get vsix Filename
-$session = New-PSSession -ContainerId $containerID -RunAsAdministrator
-$vsixName = Invoke-Command -Session $session -ScriptBlock {
-    while (!(Test-Path "c:\inetpub\wwwroot\http\*.vsix")) {
-        Start-Sleep -Seconds 5
+if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container)) {
+    $Folder = "C:\DOWNLOAD\VSCode"
+    $Filename = "$Folder\VSCodeSetup-stable.exe"
+    New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
+    if (!(Test-Path $Filename)) {
+        DownloadFile -SourceUrl "https://go.microsoft.com/fwlink/?LinkID=623230" -destinationFile $Filename
     }
-    (Get-Item "c:\inetpub\wwwroot\http\*.vsix").Name
-}
-if ($vsixName -ne "") {
-    $VsixFilename = "c:\demo\al.vsix"
-    DownloadFile -SourceUrl "http://navserver:8080/$vsixName" -destinationFile $VsixFilename
+    
+    Log "Installing Visual Studio Code"
+    $setupParameters = “/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
+    Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
+    
+    Log "Download samples"
+    $Folder = "C:\DOWNLOAD"
+    $Filename = "$Folder\samples.zip"
+    New-Item $folder -ItemType Directory -ErrorAction Ignore
+    $WebClient = New-Object System.Net.WebClient
+    $WebClient.DownloadFile("https://www.github.com/Microsoft/AL/archive/master.zip", $filename)
+    Remove-Item -Path "$folder\AL-master" -Force -Recurse -ErrorAction Ignore | Out-null
+    [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($filename, $folder)
+    Copy-Item -Path "$folder\AL-master\*" -Destination $PSScriptRoot -Recurse -Force -ErrorAction Ignore
+    
+    $alFolder = "C:\Users\$([Environment]::UserName)\Documents\AL"
+    Remove-Item -Path "$alFolder\Samples" -Recurse -Force -ErrorAction Ignore | Out-Null
+    New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
+    Copy-Item -Path (Join-Path $PSScriptRoot "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
 
-    Log "Installing .vsix"
-    $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
-    & $code @('--install-extension', $VsixFileName) | Out-Null
-
-    $username = [Environment]::UserName
-    if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
-        if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
-            Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
+    # Get vsix Filename
+    $session = New-PSSession -ContainerId $containerID -RunAsAdministrator
+    $vsixName = Invoke-Command -Session $session -ScriptBlock {
+        while (!(Test-Path "c:\inetpub\wwwroot\http\*.vsix")) {
+            Start-Sleep -Seconds 5
+        }
+        (Get-Item "c:\inetpub\wwwroot\http\*.vsix").Name
+    }
+    
+    if ($vsixName -ne "") {
+        $VsixFilename = "c:\demo\al.vsix"
+        DownloadFile -SourceUrl "http://${containerName}:8080/$vsixName" -destinationFile $VsixFilename
+    
+        Log "Installing .vsix"
+        $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
+        & $code @('--install-extension', $VsixFileName) | Out-Null
+    
+        $username = [Environment]::UserName
+        if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
+            if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
+                Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
+            }
         }
     }
-}
-
-if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
-    Invoke-Command -Session $session -ScriptBlock {
-        Import-Module "C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1"
-        Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue
+    
+    if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
+        Invoke-Command -Session $session -ScriptBlock {
+            Import-Module "C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1"
+            Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue
+        }
     }
+    
+    
+    Log "Creating Desktop Shortcuts"
+    New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+    New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
+    New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
+    
+    Log "Cleanup"
+    Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
+    Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
+    Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
+    
+    # Remove Scheduled Task
+    if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
+        schtasks /DELETE /TN setupScript /F | Out-Null
+    }
+    
+    Start-Process "http://${hostname}:8080"
+    Start-Process "http://aka.ms/moderndevtools"
 }
-
-
-Log "Creating Desktop Shortcuts"
-New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
-New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\run\prompt.ps1"
-
-Log "Cleanup"
-Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
-Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
-Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
-
-# Remove Scheduled Task
-if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
-    schtasks /DELETE /TN setupScript /F | Out-Null
-}
-
-Start-Process "http://${hostname}:8080"
-Start-Process "http://aka.ms/moderndevtools"
 
 docker logs navserver | % { log "Container: $_" }

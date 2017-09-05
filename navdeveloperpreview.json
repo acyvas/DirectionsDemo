@@ -186,6 +186,20 @@
               "priority": 500,
               "direction": "Inbound"
             }
+          },
+          {
+            "name": "Developer",
+            "properties": {
+              "description": "Access to Developer Services",
+              "protocol": "Tcp",
+              "sourcePortRange": "7049",
+              "destinationPortRange": "7049",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 600,
+              "direction": "Inbound"
+            }
           }
         ]
       }

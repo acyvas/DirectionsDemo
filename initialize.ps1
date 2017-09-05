@@ -49,15 +49,13 @@ if ($country -ne "w1") {
     $pullImage += "-fin$country"
 }
 
-#Log "pull microsoft/windowsservercore"
-#docker pull microsoft/windowsservercore
-#Log "pull $registry/$pullImage"
-#docker pull $registry/$pullImage
+Log "pull microsoft/windowsservercore"
+docker pull microsoft/windowsservercore
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
-DownloadFile -sourceUrl "${scriptPath}AdditionalSetup.ps1" -destinationFile "c:\myfolder\AdditionalSetup.ps1"
+DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
