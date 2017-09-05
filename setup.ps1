@@ -97,6 +97,26 @@ if ($containerName -ne $hostName) {
     " $IPAddress $containerName" | Set-Content -Path "c:\windows\system32\drivers\etc\hosts" -Force
 }
 
+# Copy .vsix and Certificate to C:\Demo
+Log "Copy .vsix and Certificate to C:\Demo"
+Remove-Item "C:\Demo\*.vsix" -Force
+Remove-Item "C:\Demo\*.cer" -Force
+docker exec -it navserver powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
+copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Demo' -force"
+$vsixFileName = (Get-Item "C:\Demo\*.vsix").Name
+$certFileName = (Get-Item "C:\Demo\*.cer").Name
+
+# Install Certificate on host
+if ($certFileName) {
+    Log "Import $certFileName to trusted root"
+    $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 
+    $pfx.import($certFileName)
+    $store = new-object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root,"localmachine")
+    $store.open("MaxAllowed") 
+    $store.add($pfx) 
+    $store.close()
+}
+
 if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container)) {
     $Folder = "C:\DOWNLOAD\VSCode"
     $Filename = "$Folder\VSCodeSetup-stable.exe"
@@ -125,19 +145,8 @@ if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container))
     New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
     Copy-Item -Path (Join-Path $PSScriptRoot "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
 
-    # Get vsix Filename
-    $session = New-PSSession -ContainerId $containerID -RunAsAdministrator
-    $vsixName = Invoke-Command -Session $session -ScriptBlock {
-        while (!(Test-Path "c:\inetpub\wwwroot\http\*.vsix")) {
-            Start-Sleep -Seconds 5
-        }
-        (Get-Item "c:\inetpub\wwwroot\http\*.vsix").Name
-    }
-    
-    if ($vsixName -ne "") {
-        $VsixFilename = "c:\demo\al.vsix"
-        DownloadFile -SourceUrl "http://${containerName}:8080/$vsixName" -destinationFile $VsixFilename
-    
+    if ($vsixFileName -ne "") {
+
         Log "Installing .vsix"
         $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
         & $code @('--install-extension', $VsixFileName) | Out-Null
@@ -161,9 +170,9 @@ if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container))
     Log "Creating Desktop Shortcuts"
     New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-    New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-    New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
-    New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
+    New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
+    New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
     
     Log "Cleanup"
     Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
@@ -177,6 +186,7 @@ if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container))
     
     Start-Process "http://${hostname}:8080"
     Start-Process "http://aka.ms/moderndevtools"
-}
 
-docker logs navserver | % { log "Container: $_" }
+    Log "Container output:"
+    docker logs navserver | % { log $_ }
+}
