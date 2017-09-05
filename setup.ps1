@@ -176,10 +176,8 @@ if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container))
     }
     
     if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
-        Invoke-Command -Session $session -ScriptBlock {
-            Import-Module "C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1"
-            Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue
-        }
+        docker exec -it navserver powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
+Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
     }
     
     
