@@ -1,5 +1,4 @@
-﻿
-function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
+﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
@@ -47,6 +46,14 @@ if ($hostName -eq "") {
     $useSSL = "N"
 }
 
+# Enable File Download in IE
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0
+
+# Enable Font Download in IE
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
+
 Log("Docker Login")
 $registry = "navdocker.azurecr.io"
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU=" | Out-Null
@@ -57,6 +64,14 @@ docker pull $imageName
 docker ps --filter name=$containerName -q | % {
     Log "Remove container $containerName"
     docker rm $_ -f | Out-Null
+}
+
+Set-Content -Path "C:\Demo\Country.txt" -Value $Country
+switch ($country) {
+"DK"    { $locale = "da-DK" }
+"CA"    { $locale = "en-CA" }
+"GB"    { $locale = "en-GB" }
+default { $locale = "en-US" }
 }
 
 Log "Docker Run $imageName"
@@ -70,6 +85,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --env      username="$navAdminUsername" `
                           --env      password="$adminPassword" `
                           --env      useSSL=$useSSL `
+                          --env      locale=$locale `
                           --volume   c:\demo:c:\demo `
                           --volume   c:\myfolder:c:\run\my `
                           --detach `
@@ -190,3 +206,4 @@ if (!(Test-Path "C:\Program Files (x86)\Microsoft VS Code" -PathType Container))
     Log "Container output:"
     docker logs navserver | % { log $_ }
 }
+

@@ -32,6 +32,11 @@ private string getHost()
   return uri.Host;
 }
 
+private string getCountry()
+{
+  return System.IO.File.ReadAllText(@"c:\demo\country.txt");
+}
+
 private void GetCustomSettings()
 {
   if (this.customSettings == null)
@@ -358,11 +363,13 @@ You can view the installation status by following this link.
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/<% =System.IO.Path.GetFileName(vsix[0]) %>"><% =System.IO.Path.GetFileNameWithoutExtension(vsix[0]) %></a></td>
     </tr>
-    <tr><td colspan="4">launch.json settings</td></tr>
+    <tr><td colspan="4">launch.json settings:</td></tr>
     <tr><td colspan="4" style="font-family: Courier, Monaco, monospace">&nbsp;&nbsp;"server": "https://<%=getHost() %>",<br>
       &nbsp;&nbsp;"serverInstance": "NAV",<br>
       &nbsp;&nbsp;"tenant": "",<br>
       &nbsp;&nbsp;"authentication": "UserPassword",</td></tr>
+    <tr><td colspan="4">app.json settings:</td></tr>
+    <tr><td colspan="4" style="font-family: Courier, Monaco, monospace">&nbsp;&nbsp;"locale": "<%=getCountry() %>",</td></tr>
 <%
     }
 %>
