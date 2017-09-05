@@ -48,17 +48,20 @@ $country = $country.ToLowerInvariant()
 if ($country -ne "w1") {
     $pullImage += "-fin$country"
 }
+$imageName = "$registry/$pullImage"
+
+# Turn off IE Enhanced Security Configuration
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
 
 Log "pull microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
-Log "pull $registry/$pullImage"
-docker pull $registry/$pullImage
+Log "pull $imageName"
+docker pull $imageName
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
-DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
-DownloadFile -sourceUrl "${scriptPath}AdditionalSetup.ps1" -destinationFile "c:\myfolder\AdditionalSetup.ps1"
-DownloadFile -sourceUrl "${scriptPath}prompt.ps1" -destinationFile "c:\demo\prompt.ps1"
+DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
@@ -69,12 +72,13 @@ if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content "c:\demo\settings.ps1"
-('$hostName = "' + $hostName + '"')                   | Add-Content "c:\demo\settings.ps1"
-('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content "c:\demo\settings.ps1"
-('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content "c:\demo\settings.ps1"
-('$adminPassword = "' + $adminPassword + '"')         | Add-Content "c:\demo\settings.ps1"
-('$country = "' + $country + '"')                     | Add-Content "c:\demo\settings.ps1"
+('$imageName = "' + $imageName + '"')                 | Set-Content $setupScript
+('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $setupScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupScript
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupScript
+('$country = "' + $country + '"')                     | Add-Content $setupScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}setup.ps1") | Add-Content $setupScript
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
 $trigger = New-ScheduledTaskTrigger -AtLogOn

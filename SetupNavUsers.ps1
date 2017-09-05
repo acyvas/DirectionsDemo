@@ -1,18 +1,16 @@
-﻿if (Get-NavServerUser 'NAV' | Where-Object { $_.UserName -eq 'FIN' }) {
+﻿. "C:\Run\SetupNavUsers.ps1"
 
-    Write-Host "Users and Entitlements have already been created"
-
-} else {
-
+if ($DatabaseName.StartsWith("Financials")) {
     $securePassword = ConvertTo-SecureString -Force -AsPlainText -String $password
-
+    
+    Write-Host "Creating Users and Entitlements"
     # CSPAdmin might have been created as admin of container
     if (!(Get-NavServerUser 'NAV' | Where-Object { $_.UserName -eq 'CSPADMIN' })) {
         # Add CSPADMIN user as a NAV user and assign SUPER permission set
         New-NAVServerUser 'NAV' -UserName 'CSPADMIN' -Password $securePassword -FullName 'CSP Administrator'
         New-NAVServerUserPermissionSet 'NAV' –UserName 'CSPADMIN' -PermissionSetId 'SUPER'
     }
-
+    
     # Add FIN user as a NAV user and assign to the D365 BUS FULL ACCESS permission set
     New-NAVServerUser 'NAV' -UserName 'FIN' -Password $securePassword -FullName 'Financials User'
     New-NAVServerUserPermissionSet 'NAV' –UserName 'FIN' -PermissionSetId 'D365 BUS FULL ACCESS'
@@ -37,6 +35,5 @@
     Invoke-Sqlcmd -Server "$DatabaseServer\$DatabaseInstance" -Query "declare @SID2 uniqueidentifier
     SELECT @SID2 = [User Security ID] FROM [$DatabaseName].[dbo].[User] where [User Name]= 'ACCT'
     INSERT INTO [$DatabaseName].[dbo].[Membership Entitlement] VALUES (DEFAULT, 2, @SID2, 'APPS RANGE', 'DYN365_FINANCIALS_ACCOUNTANT',1), (DEFAULT, 2, @SID2, 'DYNAMICS EXTENSIONS', 'DYN365_FINANCIALS_ACCOUNTANT',1), (DEFAULT, 2, @SID2, 'DFIN_ACCOUNTANT', 'DYN365_FINANCIALS_ACCOUNTANT',1);"
-
-    Write-Host "Users and Entitlements have been created"
 }
+    
