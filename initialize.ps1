@@ -54,7 +54,6 @@ docker pull microsoft/windowsservercore
 
 $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
-DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
@@ -66,12 +65,13 @@ if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content "c:\demo\settings.ps1"
-('$hostName = "' + $hostName + '"')                   | Add-Content "c:\demo\settings.ps1"
-('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content "c:\demo\settings.ps1"
-('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content "c:\demo\settings.ps1"
-('$adminPassword = "' + $adminPassword + '"')         | Add-Content "c:\demo\settings.ps1"
-('$country = "' + $country + '"')                     | Add-Content "c:\demo\settings.ps1"
+('$imageName = "'+$registry + '/' + $pullImage + '"') | Set-Content $setupScript
+('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $setupScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupScript
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupScript
+('$country = "' + $country + '"')                     | Add-Content $setupScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}setup.ps1") | Add-Content $setupScript
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
 $trigger = New-ScheduledTaskTrigger -AtLogOn

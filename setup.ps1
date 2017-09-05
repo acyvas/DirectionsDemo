@@ -1,5 +1,4 @@
-﻿. "c:\demo\settings.ps1"
-
+﻿
 function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
