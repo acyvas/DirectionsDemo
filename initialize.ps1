@@ -58,7 +58,6 @@ $setupScript = "c:\demo\setup.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -SourceUrl "${scriptPath}setup.ps1" -destinationFile $setupScript
 DownloadFile -sourceUrl "${scriptPath}AdditionalSetup.ps1" -destinationFile "c:\myfolder\AdditionalSetup.ps1"
-DownloadFile -sourceUrl "${scriptPath}prompt.ps1" -destinationFile "c:\demo\prompt.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"

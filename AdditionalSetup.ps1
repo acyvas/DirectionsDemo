@@ -2,8 +2,14 @@
 
     Write-Host "Users and Entitlements have already been created"
 
+} elseif (!($DatabaseName.StartsWith("Financials"))) {
+
+    Write-Host "Skipping Users and Entitlements"
+
 } else {
 
+    Write-Host "Creating Users and Entitlements"
+    
     $securePassword = ConvertTo-SecureString -Force -AsPlainText -String $password
 
     # CSPAdmin might have been created as admin of container
@@ -38,5 +44,4 @@
     SELECT @SID2 = [User Security ID] FROM [$DatabaseName].[dbo].[User] where [User Name]= 'ACCT'
     INSERT INTO [$DatabaseName].[dbo].[Membership Entitlement] VALUES (DEFAULT, 2, @SID2, 'APPS RANGE', 'DYN365_FINANCIALS_ACCOUNTANT',1), (DEFAULT, 2, @SID2, 'DYNAMICS EXTENSIONS', 'DYN365_FINANCIALS_ACCOUNTANT',1), (DEFAULT, 2, @SID2, 'DFIN_ACCOUNTANT', 'DYN365_FINANCIALS_ACCOUNTANT',1);"
 
-    Write-Host "Users and Entitlements have been created"
 }

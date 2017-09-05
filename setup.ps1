@@ -40,20 +40,6 @@ if (!(Get-Module -Name Docker -ErrorAction Ignore)) {
     Install-Module -Name Docker -Repository DockerPS-Dev -Scope AllUsers -Force
 }
 
-# Override SetupConfiguration to not use SSL for Developer Services
-'. (Join-Path $runPath $MyInvocation.MyCommand.Name)
-if ($servicesUseSSL) {
-    # change urlacl reservation for DeveloperService
-    netsh http delete sslcert ipport=0.0.0.0:7049 | Out-Null
-    netsh http delete urlacl url=https://+:7049/NAV | Out-Null
-    netsh http add urlacl url=http://+:7049/NAV user="NT AUTHORITY\SYSTEM" | Out-Null
-    # No SSL for developer services port - only internal
-    $CustomConfigFile =  Join-Path $ServiceTierFolder "CustomSettings.config"
-    $CustomConfig = [xml](Get-Content $CustomConfigFile)
-    $CustomConfig.SelectSingleNode("//appSettings/add[@key=""DeveloperServicesSSLEnabled""]").Value = "false"
-    $CustomConfig.Save($CustomConfigFile)
-}' | Add-Content -Path "c:\myfolder\SetupConfiguration.ps1"
-
 # Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
@@ -80,7 +66,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --publish  8080:8080 `
                           --publish  80:80 `
                           --publish  443:443 `
-                          --publish  7046-7048:7046-7048 `
+                          --publish  7046-7049:7046-7049 `
                           --env      username="$navAdminUsername" `
                           --env      password="$adminPassword" `
                           --env      useSSL=$useSSL `
@@ -160,7 +146,7 @@ New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${h
 New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 New-DesktopShortcut -Name "Web Client"                   -TargetPath "http://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID cmd"
-New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\demo\prompt.ps1"
+New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerID powershell -noexit c:\run\prompt.ps1"
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
