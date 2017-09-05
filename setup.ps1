@@ -103,8 +103,8 @@ Remove-Item "C:\Demo\*.vsix" -Force
 Remove-Item "C:\Demo\*.cer" -Force
 docker exec -it navserver powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
 copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Demo' -force"
-$vsixFileName = (Get-Item "C:\Demo\*.vsix").Name
-$certFileName = (Get-Item "C:\Demo\*.cer").Name
+$vsixFileName = (Get-Item "C:\Demo\*.vsix").FullName
+$certFileName = (Get-Item "C:\Demo\*.cer").FullName
 
 # Install Certificate on host
 if ($certFileName) {
