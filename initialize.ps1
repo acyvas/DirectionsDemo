@@ -33,14 +33,14 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Log("Starting initialization")
 Log("TemplateLink: $templateLink")
 
-Log("Upgrade Docker Engine")
+Log("Upgrading Docker Engine")
 Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
 Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
 Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
 Start-Service docker
 
-Log("Docker Login")
 $registry = "navdocker.azurecr.io"
+Log("Logging in to $registry")
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
 $pullImage = "dynamics-nav:$navVersion"
@@ -54,12 +54,14 @@ $imageName = "$registry/$pullImage"
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
 
-Log "pull microsoft/windowsservercore"
+Log "pulling microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
-Log "pull $imageName"
+
+Log "pulling $imageName"
 docker pull $imageName
 
-$setupScript = "c:\demo\setup.ps1"
+$setupDesktopScript = "c:\demo\SetupDesktop.ps1"
+$setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
@@ -72,17 +74,27 @@ if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-('$imageName = "' + $imageName + '"')                 | Set-Content $setupScript
-('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $setupScript
-('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupScript
-('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupScript
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupScript
-('$country = "' + $country + '"')                     | Add-Content $setupScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}setup.ps1") | Add-Content $setupScript
+$containerName = "navserver"
+$useSSL = "Y"
+if ($hostName -eq "") { 
+    $hostName = $containerName
+    $useSSL = "N"
+}
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupDesktopScript
+('$containerName = "' + $containerName + '"')         | Add-Content $setupDesktopScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupDesktop.ps1") | Add-Content $setupDesktopScript
+
+('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
+('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupNavContainerScript
+('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupNavContainer.ps1") | Add-Content $setupNavContainerScript
+
+. $setupNavContainerScript
+
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
 $trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
-
-Log "Reboot and run Setup Task"
-Restart-Computer -Force
+Register-ScheduledTask -TaskName "SetupDesktop" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null

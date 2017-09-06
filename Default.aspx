@@ -73,9 +73,14 @@ private string createQrImg(string link, string title, int width = 100, int heigh
   return string.Format("<img src=\"https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl={0}&chld=L|0\" title=\"{1}\" width=\"{2}\" height=\"{3}\" />", encodedlink, title, width, height);
 }
 
+private string getLandingPageUrl()
+{
+  return getHost();
+}
+
 private string createQrForLandingPage()
 {
-  return createQrImg("http://"+Request.Url.Host+":"+Request.Url.Port, getProduct());
+  return createQrImg("http://"+getLandingPageUrl(), getProduct());
 }
 
 private string getServerInstance()
@@ -240,7 +245,7 @@ function show(selected) {
     <tr>
       <td colspan="2">The <%=getProduct() %> is secured with a self-signed certificate. In order to connect to the environment, you must trust this certificate. Select operating system and browser to view the process for downloading and trusting the certificate:</td>
       <td></td>
-      <td rowspan="2" style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/Certificate.cer" target="_blank">Download Certificate</a></td>
+      <td rowspan="2" style="white-space: nowrap"><a href="http://<%=getLandingPageUrl() %>/Certificate.cer" target="_blank">Download Certificate</a></td>
     </tr>
     <tr>
       <td colspan="2">
@@ -290,7 +295,7 @@ You can connect to the server in the <%=getProduct() %> by following this link.
 %>
         </td>
         <td></td>
-        <td style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/<% =System.IO.Path.GetFileName(rdps[i]) %>"><% =System.IO.Path.GetFileNameWithoutExtension(rdps[i]) %></a></td>
+        <td style="white-space: nowrap"><a href="http://<%=getLandingPageUrl() %>/<% =System.IO.Path.GetFileName(rdps[i]) %>"><% =System.IO.Path.GetFileNameWithoutExtension(rdps[i]) %></a></td>
       </tr>
 <%
     }
@@ -312,7 +317,7 @@ You can connect to the server in the <%=getProduct() %> by following this link.
 You can view the installation status by following this link.
         </td>
         <td></td>
-        <td style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/status.aspx">View Installation Status</a></td>
+        <td style="white-space: nowrap"><a href="http://<%=getLandingPageUrl() %>/status.aspx">View Installation Status</a></td>
       </tr>
 <%
   }
@@ -340,7 +345,7 @@ You can view the installation status by following this link.
     <tr>
       <td colspan="2">The <%=getProduct() %> supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
       <td></td>  
-      <td style="white-space: nowrap"><a href="http://<% =Request.Url.Host+":"+Request.Url.Port %>/NAV" target="_blank">Install Windows Client</a></td>
+      <td style="white-space: nowrap"><a href="http://<% =getLandingPageUrl() %>/NAV" target="_blank">Install Windows Client</a></td>
     </tr>
 <%
     }
@@ -365,7 +370,7 @@ You can view the installation status by following this link.
     <tr>
       <td colspan="2">Download the AL Language Customization for Visual Studio Code (.vsix)</td>
       <td></td>  
-      <td style="white-space: nowrap"><a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/<% =System.IO.Path.GetFileName(vsix[0]) %>"><% =System.IO.Path.GetFileNameWithoutExtension(vsix[0]) %></a></td>
+      <td style="white-space: nowrap"><a href="http://<%=getLandingPageUrl() %>/<% =System.IO.Path.GetFileName(vsix[0]) %>"><% =System.IO.Path.GetFileNameWithoutExtension(vsix[0]) %></a></td>
     </tr>
     <tr><td colspan="4">launch.json settings:</td></tr>
     <tr><td colspan="4" style="font-family: Courier, Monaco, monospace">&nbsp;&nbsp;"server": "https://<%=getHost() %>",<br>
