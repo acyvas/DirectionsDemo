@@ -35,15 +35,15 @@ function refresh()
 </head>
 <body onload="JavaScript:timeRefresh(10000);">
 <p>
-<a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>">View Landing Page</a>&nbsp;&nbsp;
+<a href="http://<%=Request.Url.Host %>">View Landing Page</a>&nbsp;&nbsp;
 <%
 if (Request.Url.AbsoluteUri.Contains("norefresh")) {
 %>
-  <a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/status.aspx">Enable refresh</a>&nbsp;&nbsp;
+  <a href="http://<%=Request.Url.Host %>/status.aspx">Enable refresh</a>&nbsp;&nbsp;
 <%
 } else {
 %>
-  <a href="http://<%=Request.Url.Host+":"+Request.Url.Port %>/status.aspx?norefresh">Disable refresh</a>
+  <a href="http://<%=Request.Url.Host %>/status.aspx?norefresh">Disable refresh</a>
 <%
 }
 %>
