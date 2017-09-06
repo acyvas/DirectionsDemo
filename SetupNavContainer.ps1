@@ -5,8 +5,9 @@
 $httpPath = Join-Path $wwwRootPath "http"
 Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
 if ($hostname -ne "") {
-"full address:s:$hostname:3389
-prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
+"full address:s:${hostname}:3389
+prompt for credentials:i:1
+username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
 }' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 $registry = "navdocker.azurecr.io"
