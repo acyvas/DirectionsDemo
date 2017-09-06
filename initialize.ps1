@@ -56,10 +56,12 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Active Setup\Installed Componen
 
 Log "pulling microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
+
 Log "pulling $imageName"
 docker pull $imageName
 
-$setupScript = "c:\demo\setup.ps1"
+$setupDesktopScript = "c:\demo\SetupDesktop.ps1"
+$setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
@@ -72,19 +74,6 @@ if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupScript
-('$containerName = "' + $containerName + '"')         | Add-Content $setupScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}setup.ps1") | Add-Content $setupScript
-
-# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
-'$wwwRootPath = Get-WWWRootPath
-$httpPath = Join-Path $wwwRootPath "http"
-Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
-if ($hostname -ne "") {
-"full address:s:$hostname:3389
-prompt for credentials:i:1" | Set-Content "$httpPath\Connect.rdp"
-}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
-
 $containerName = "navserver"
 $useSSL = "Y"
 if ($hostName -eq "") { 
@@ -92,85 +81,20 @@ if ($hostName -eq "") {
     $useSSL = "N"
 }
 
-docker ps --filter name=$containerName -q | % {
-    Log "Removing container $containerName"
-    docker rm $_ -f | Out-Null
-}
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupDesktopScript
+('$containerName = "' + $containerName + '"')         | Add-Content $setupDesktopScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupDesktop.ps1") | Add-Content $setupDesktopScript
 
-Set-Content -Path "C:\Demo\Country.txt" -Value $Country
-switch ($country) {
-"DK"    { $locale = "da-DK" }
-"CA"    { $locale = "en-CA" }
-"GB"    { $locale = "en-GB" }
-default { $locale = "en-US" }
-}
+('$hostName = "' + $hostName + '"')                   | Add-Content $setupNavContainerScript
+('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
+('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
+('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}setupNavContainer.ps1") | Add-Content $setupNavContainerScript
 
-Log "Running $imageName"
-$containerId = docker run --env      accept_eula=Y `
-                          --hostname $hostName `
-                          --name     $containerName `
-                          --publish  8080:8080 `
-                          --publish  80:80 `
-                          --publish  443:443 `
-                          --publish  7046-7049:7046-7049 `
-                          --env      username="$navAdminUsername" `
-                          --env      password="$adminPassword" `
-                          --env      useSSL=$useSSL `
-                          --env      locale=$locale `
-                          --volume   c:\demo:c:\demo `
-                          --volume   c:\myfolder:c:\run\my `
-                          --detach `
-                          $imageName
+. $setupNavContainerScript
 
-if ($LastExitCode -ne 0) {
-    throw "Docker run error"
-}
-
-Log "Waiting for container to become healthy, this shouldn't take more than 2 minutes"
-do {
-    Start-Sleep -Seconds 2
-    $status = (docker ps -a --filter Name=$containerName --format '{{.Status}}')
-    $healthy = $status.Contains('healthy')
-} while (!$healthy)
-
-if ($containerName -ne $hostName) {
-    # Add Container IP Address to Hosts file as $containername
-    Log "Adding $containerName to hosts file"
-    $s = docker inspect $containerId
-    $IPAddress = ([string]::Join(" ", $s) | ConvertFrom-Json).NetworkSettings.Networks.nat.IPAddress
-    " $IPAddress $containerName" | Set-Content -Path "c:\windows\system32\drivers\etc\hosts" -Force
-}
-
-# Copy .vsix and Certificate to C:\Demo
-Log "Copying .vsix and Certificate to C:\Demo"
-Remove-Item "C:\Demo\*.vsix" -Force
-Remove-Item "C:\Demo\*.cer" -Force
-docker exec -it navserver powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
-copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Demo' -force"
-$vsixFileName = (Get-Item "C:\Demo\*.vsix").FullName
-$certFileName = (Get-Item "C:\Demo\*.cer").FullName
-
-# Install Certificate on host
-if ($certFileName) {
-    Log "Importing $certFileName to trusted root"
-    $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 
-    $pfx.import($certFileName)
-    $store = new-object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root,"localmachine")
-    $store.open("MaxAllowed") 
-    $store.add($pfx) 
-    $store.close()
-}
-
-if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
-    Log "Importing license file"
-    docker exec -it navserver powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
-Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
-}
-
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupScript"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
 $trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "setupScript" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
-
-Log "Restarting"
-
-Restart-Computer -Force
+Register-ScheduledTask -TaskName "SetupDesktop" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
