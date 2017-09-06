@@ -5,6 +5,37 @@
 <%@ Import Namespace="System.Reflection" %>
 <%@ Import Namespace="System.Diagnostics" %>
 <%@ Page Language="c#" debug="true" %>
+<script runat="server">
+
+private XmlDocument customSettings = null;
+
+private string getWebBaseUrl()
+{
+  GetCustomSettings();
+  return customSettings.SelectSingleNode("//appSettings/add[@key='PublicWebBaseUrl']").Attributes["value"].Value.ToLowerInvariant();
+}
+
+private string getHost()
+{
+  var uri = new Uri(getWebBaseUrl());
+  return uri.Host;
+}
+
+private void GetCustomSettings()
+{
+  if (this.customSettings == null)
+  {
+    var dir = Directory.EnumerateDirectories(@"C:\Program Files\Microsoft Dynamics NAV").Last();
+    customSettings = new XmlDocument();
+    customSettings.Load(dir + @"\Service\CustomSettings.config");
+  }
+}
+
+private string getLandingPageUrl()
+{
+  return getHost();
+}
+</script>
 <html>
 <head>
     <title>Microsoft Dynamics NAV Installation Status</title>
@@ -35,15 +66,15 @@ function refresh()
 </head>
 <body onload="JavaScript:timeRefresh(10000);">
 <p>
-<a href="http://<%=Request.Url.Host %>">View Landing Page</a>&nbsp;&nbsp;
+<a href="http://<%=getLandingPageUrl() %>">View Landing Page</a>&nbsp;&nbsp;
 <%
 if (Request.Url.AbsoluteUri.Contains("norefresh")) {
 %>
-  <a href="http://<%=Request.Url.Host %>/status.aspx">Enable refresh</a>&nbsp;&nbsp;
+  <a href="http://<%=getLandingPageUrl() %>/status.aspx">Enable refresh</a>&nbsp;&nbsp;
 <%
 } else {
 %>
-  <a href="http://<%=Request.Url.Host %>/status.aspx?norefresh">Disable refresh</a>
+  <a href="http://<%=getLandingPageUrl() %>/status.aspx?norefresh">Disable refresh</a>
 <%
 }
 %>
