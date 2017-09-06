@@ -34,7 +34,11 @@ private string getHost()
 
 private string getCountry()
 {
-  return System.IO.File.ReadAllText(@"c:\demo\country.txt");
+  if (System.IO.File.Exists(@"c:\demo\country.txt"))
+  {
+    return (System.IO.File.ReadAllLines(@"c:\demo\country.txt")[0]).ToUpperInvariant();
+  }
+  return "W1";
 }
 
 private void GetCustomSettings()
