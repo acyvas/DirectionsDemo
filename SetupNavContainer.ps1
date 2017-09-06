@@ -1,4 +1,5 @@
-﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
+﻿
+function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 # Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
@@ -10,17 +11,10 @@ prompt for credentials:i:1
 username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
 }' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
-$registry = "navdocker.azurecr.io"
-Log("Logging in to $registry")
-docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
-
 docker ps --filter name=$containerName -a -q | % {
     Log "Removing container $containerName"
     docker rm $_ -f | Out-Null
 }
-
-Log "pulling $imageName"
-docker pull $imageName
 
 Set-Content -Path "C:\Demo\Country.txt" -Value $Country
 switch ($country) {
