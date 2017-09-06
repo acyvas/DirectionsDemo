@@ -357,7 +357,7 @@ You can view the installation status by following this link.
     var vsix = System.IO.Directory.GetFiles(Server.MapPath("."), "*.vsix");
     if (vsix.Length == 1) {
 %>    
-    <tr><td colspan="4"><h3>Access the <%=getProduct() %> using Developer Services</h3></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getProduct() %> using Visual Studio Code</h3></td></tr>
     <tr>
       <td colspan="2">Download the AL Language Customization for Visual Studio Code (.vsix)</td>
       <td></td>  
