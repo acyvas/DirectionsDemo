@@ -91,7 +91,7 @@ if ($hostName -eq "") {
 ('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}setupNavContainer.ps1") | Add-Content $setupNavContainerScript
+(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupNavContainer.ps1") | Add-Content $setupNavContainerScript
 
 . $setupNavContainerScript
 
