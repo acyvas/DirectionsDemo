@@ -63,6 +63,7 @@ Remove-Item -Path "$alFolder\Samples" -Recurse -Force -ErrorAction Ignore | Out-
 New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
 Copy-Item -Path (Join-Path $PSScriptRoot "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
 
+$vsixFileName = (Get-Item "C:\Demo\*.vsix").FullName
 if ($vsixFileName -ne "") {
 
     Log "Installing .vsix"

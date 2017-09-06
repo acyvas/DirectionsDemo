@@ -1,4 +1,6 @@
-﻿# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
+﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
+
+# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
 Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
@@ -11,7 +13,7 @@ $registry = "navdocker.azurecr.io"
 Log("Logging in to $registry")
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
-docker ps --filter name=$containerName -q | % {
+docker ps --filter name=$containerName -a -q | % {
     Log "Removing container $containerName"
     docker rm $_ -f | Out-Null
 }
@@ -31,8 +33,7 @@ Log "Running $imageName"
 $containerId = docker run --env      accept_eula=Y `
                           --hostname $hostName `
                           --name     $containerName `
-                          --publish  8080:8080 `
-                          --publish  80:80 `
+                          --publish  80:8080 `
                           --publish  443:443 `
                           --publish  7046-7049:7046-7049 `
                           --env      username="$navAdminUsername" `
@@ -69,7 +70,6 @@ Remove-Item "C:\Demo\*.vsix" -Force
 Remove-Item "C:\Demo\*.cer" -Force
 docker exec -it navserver powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
 copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Demo' -force"
-$vsixFileName = (Get-Item "C:\Demo\*.vsix").FullName
 $certFileName = (Get-Item "C:\Demo\*.cer").FullName
 
 # Install Certificate on host

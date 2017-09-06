@@ -85,10 +85,10 @@ if ($hostName -eq "") {
 ('$containerName = "' + $containerName + '"')         | Add-Content $setupDesktopScript
 (New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupDesktop.ps1") | Add-Content $setupDesktopScript
 
+('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
+('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
 ('$hostName = "' + $hostName + '"')                   | Add-Content $setupNavContainerScript
 ('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
-('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
-('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
 (New-Object System.Net.WebClient).DownloadString("${scriptPath}setupNavContainer.ps1") | Add-Content $setupNavContainerScript
