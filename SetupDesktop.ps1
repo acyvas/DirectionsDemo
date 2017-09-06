@@ -79,7 +79,7 @@ if ($vsixFileName -ne "") {
 }
 
 Log "Creating Desktop Shortcuts"
-New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}:8080"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
@@ -95,7 +95,7 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
     schtasks /DELETE /TN setupScript /F | Out-Null
 }
 
-Start-Process "http://${hostname}:8080"
+Start-Process "http://${hostname}"
 Start-Process "http://aka.ms/moderndevtools"
 
 Log "Container output:"
