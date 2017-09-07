@@ -84,5 +84,13 @@ if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
 Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
 }
 
+Log "Waiting for container to become ready, this shouldn't take more than 2 minutes"
+$cnt = 60
+do {
+    Start-Sleep -Seconds 2
+    $logs = docker logs navserver 
+    $log = [string]::Join(" ",$logs)
+} while ($cnt-- -gt 0 -and !($log.Contains("Ready for connections!")))
+
 Log "Container output:"
 docker logs navserver | % { log $_ }
