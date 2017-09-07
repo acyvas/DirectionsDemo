@@ -97,6 +97,3 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
 
 Start-Process "http://${hostname}"
 Start-Process "http://aka.ms/moderndevtools"
-
-Log "Container output:"
-docker logs navserver | % { log $_ }

@@ -83,3 +83,6 @@ if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
     docker exec -it navserver powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
 Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
 }
+
+Log "Container output:"
+docker logs navserver | % { log $_ }
