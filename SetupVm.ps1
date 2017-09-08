@@ -10,11 +10,12 @@ if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
     schtasks /DELETE /TN setupDesktop /F | Out-Null
 }
 
+Log "Register task"
 $onceAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "c:\demo\setupdesktop.ps1"
 $onceTrigger = New-ScheduledTaskTrigger -Once
 Register-ScheduledTask -TaskName "SetupDesktop" `
-                       -Action $logonAction `
-                       -Trigger $logonTrigger `
+                       -Action $onceAction `
+                       -Trigger $onceTrigger `
                        -RunLevel Highest `
                        -User vmadmin `
                        -Password Pepsimax4ever | Out-Null
