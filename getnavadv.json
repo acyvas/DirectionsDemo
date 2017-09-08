@@ -3,17 +3,17 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vmName": {
-          "type": "string",
-          "metadata": {
-            "Description": "Select the name of the deployment"
-          }
+            "type": "string",
+            "metadata": {
+                "Description": "Select the name of the deployment"
+            }
         },
         "vmAdminUsername": {
-          "type": "string",
-          "defaultValue": "vmadmin",
-          "metadata": {
-            "Description": "Specify VM Admin user name"
-          }
+            "type": "string",
+            "defaultValue": "vmadmin",
+            "metadata": {
+                "Description": "Specify VM Admin user name"
+            }
         },
         "navAdminUsername": {
           "type": "string",
@@ -22,11 +22,11 @@
             "Description": "Specify NAV Administrator user name"
           }
         },
-        "adminPassword": {
-          "type": "securestring",
-          "metadata": {
-            "Description": "Specify VM Admin Password"
-          }
+            "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "Description": "Specify VM Admin Password"
+            }
         },
         "country": {
           "type": "string",
@@ -47,11 +47,11 @@
 		  "type": "string",
           "defaultValue": "",
           "metadata": {
-            "Description": "Optional: Specify a secure Url of your NAV Partner License File for the developer preview. If you do not specify a license file Url here, you will have to upload the license manually later."
-          }
-		},
-	    "CertificatePfxUrl": {
-	      "type": "string",
+          "Description": "Optional: Specify a secure Url of your NAV Partner License File for the developer preview. If you do not specify a license file Url here, you will have to upload the license manually later."
+        }
+      },
+      "CertificatePfxUrl": {
+        "type": "string",
           "defaultValue": "",
           "metadata": {
             "Description": "Optional: Specify a secure Url of your Certificate Pfx File. If you do not specify a certificate, you will get a Self Signed Certificate."
