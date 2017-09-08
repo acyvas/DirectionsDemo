@@ -3,17 +3,17 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vmName": {
-            "type": "string",
-            "metadata": {
-                "Description": "Select the name of the deployment"
-            }
+          "type": "string",
+          "metadata": {
+            "Description": "Select the name of the deployment"
+          }
         },
         "vmAdminUsername": {
-            "type": "string",
-            "defaultValue": "vmadmin",
-            "metadata": {
-                "Description": "Specify VM Admin user name"
-            }
+          "type": "string",
+          "defaultValue": "vmadmin",
+          "metadata": {
+            "Description": "Specify VM Admin user name"
+          }
         },
         "navAdminUsername": {
           "type": "string",
@@ -22,11 +22,11 @@
             "Description": "Specify NAV Administrator user name"
           }
         },
-            "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "Description": "Specify VM Admin Password"
-            }
+        "adminPassword": {
+          "type": "securestring",
+          "metadata": {
+            "Description": "Specify VM Admin Password"
+          }
         },
         "country": {
           "type": "string",
@@ -71,7 +71,6 @@
             "Description": "Public DNS Name (CNAME record pointing to your VM). If you do not specify a public DNS name, you will get a Self Signed Certificate."
           }
         }
-      }
     },
     "variables": {
         "imagePublisher": "MicrosoftWindowsServer",
