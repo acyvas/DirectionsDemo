@@ -125,8 +125,8 @@ Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 
 # Remove Scheduled Task
-if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
-    schtasks /DELETE /TN setupScript /F | Out-Null
+if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
+    schtasks /DELETE /TN setupDesktop /F | Out-Null
 }
 
 Start-Process "http://${hostname}"

@@ -74,11 +74,12 @@ $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
-DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
-DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
-DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
-DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
-DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1" -destinationFile $setupDesktopScript
+DownloadFile -sourceUrl "${scriptPath}Default.aspx"          -destinationFile "c:\demo\http\Default.aspx"
+DownloadFile -sourceUrl "${scriptPath}status.aspx"           -destinationFile "c:\demo\http\status.aspx"
+DownloadFile -sourceUrl "${scriptPath}Line.png"              -destinationFile "c:\demo\http\Line.png"
+DownloadFile -sourceUrl "${scriptPath}Microsoft.png"         -destinationFile "c:\demo\http\Microsoft.png"
+DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1"      -destinationFile $setupDesktopScript
+DownloadFile -sourceUrl "${scriptPath}SetupVm.ps1"           -destinationFile $setupVmScript
 DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
 
 if ($licenseFileUri -ne "") {
@@ -97,7 +98,7 @@ if (!(Get-Item Cert:\LocalMachine\my\$certificateThumbprint -ErrorAction Silentl
     Write-Host "Import Certificate to LocalMachine\my"
     Import-PfxCertificate -FilePath $certificatePfxFile -CertStoreLocation cert:\localMachine\my -Password (ConvertTo-SecureString -String $certificatePfxPassword -AsPlainText -Force) | Out-Null
 }
-Remove-Item "c:\demo\certificate.pfx" -force
+Remove-Item $certificatePfxFile -force
 Remove-Item "c:\run\my\SetupCertificate.ps1" -force
 ') | Add-Content "c:\myfolder\SetupCertificate.ps1"
 $hostname = $publicDnsName
@@ -129,7 +130,7 @@ Register-ScheduledTask -TaskName "SetupDesktop" `
 
 $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupVmScript"
 $startupTrigger = New-ScheduledTaskTrigger -AtStartup
-Register-ScheduledTask -TaskName "SetupDesktop" `
+Register-ScheduledTask -TaskName "SetupVm" `
                        -Action $startupAction `
                        -Trigger $startupTrigger `
                        -RunLevel Highest `

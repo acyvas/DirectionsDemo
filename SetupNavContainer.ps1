@@ -118,3 +118,4 @@ do {
 Log "Container output:"
 docker logs navserver | % { log $_ }
 
+
