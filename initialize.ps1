@@ -11,6 +11,8 @@ param
        [string]$licenseFileUri   = ""
 )
 
+$includeWindowsClient = $true
+
 function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
@@ -91,6 +93,7 @@ if ($hostName -eq "") {
 ('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
+('$includeWindowsClient = "' + $includeWindowsClient + '"') | Add-Content $setupNavContainerScript
 (New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupNavContainer.ps1") | Add-Content $setupNavContainerScript
 
 . $setupNavContainerScript
