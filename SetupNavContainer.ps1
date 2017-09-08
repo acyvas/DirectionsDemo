@@ -13,11 +13,6 @@ switch ($country) {
 default { $locale = "en-US" }
 }
 
-if (Test-Path "C:\Program Files (x86)\Microsoft Dynamics NAV") {
-    Remove-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -Force -Recurse -ErrorAction Ignore
-}
-New-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -ItemType Directory -ErrorAction Ignore | Out-Null
-
 # Override AdditionalSetup to copy iguration to not use SSL for Developer Services
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
@@ -29,23 +24,25 @@ username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
 }
 ' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
-$navpfilesparameter = @{}
-if ($includeWindowsClient) {
-    'Copy-Item -Path "C:\Program Files (x86)\Microsoft Dynamics NAV\*" -Destination "c:\navpfiles" -Recurse -Force -ErrorAction Ignore
-    $destFolder = (Get-Item "c:\navpfiles\*\RoleTailored Client").FullName
-    $ClientUserSettingsFileName = "$runPath\ClientUserSettings.config"
-    [xml]$ClientUserSettings = Get-Content $clientUserSettingsFileName
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Server""]").value = "$hostname"
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServerInstance""]").value="NAV"
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServicesCertificateValidationEnabled""]").value="false"
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesPort""]").value="$publicWinClientPort"
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ACSUri""]").value = ""
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""DnsIdentity""]").value = "$dnsIdentity"
-    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesCredentialType""]").value = "$Auth"
-    $clientUserSettings.Save("$destFolder\ClientUserSettings.config")
-    ' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
-    $navpfilesparameter = @{ v = """C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles""" }
+
+if (Test-Path "C:\Program Files (x86)\Microsoft Dynamics NAV") {
+    Remove-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -Force -Recurse -ErrorAction Ignore
 }
+New-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -ItemType Directory -ErrorAction Ignore | Out-Null
+
+'Copy-Item -Path "C:\Program Files (x86)\Microsoft Dynamics NAV\*" -Destination "c:\navpfiles" -Recurse -Force -ErrorAction Ignore
+$destFolder = (Get-Item "c:\navpfiles\*\RoleTailored Client").FullName
+$ClientUserSettingsFileName = "$runPath\ClientUserSettings.config"
+[xml]$ClientUserSettings = Get-Content $clientUserSettingsFileName
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Server""]").value = "$hostname"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServerInstance""]").value="NAV"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServicesCertificateValidationEnabled""]").value="false"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesPort""]").value="$publicWinClientPort"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ACSUri""]").value = ""
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""DnsIdentity""]").value = "$dnsIdentity"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesCredentialType""]").value = "$Auth"
+$clientUserSettings.Save("$destFolder\ClientUserSettings.config")
+' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 Log "Running $imageName"
 $containerId = docker run --env      accept_eula=Y `
@@ -61,7 +58,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --env      locale=$locale `
                           --volume   c:\demo:c:\demo `
                           --volume   c:\myfolder:c:\run\my `
-                          @navpfilesparameter `
+                          --volume   "C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles" `
                           --detach `
                           $imageName
 
@@ -119,3 +116,4 @@ do {
 
 Log "Container output:"
 docker logs navserver | % { log $_ }
+
