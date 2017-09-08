@@ -89,7 +89,8 @@ if ($certificatePfxUrl -ne "" -and $certificatePfxPassword -ne "" -and $publicDn
     DownloadFile -sourceUrl $certificatePfxUrl -destinationFile "c:\demo\certificate.pfx"
 
 ('$certificatePfxPassword = "'+$certificatePfxPassword+'"
-$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("c:\demo\certificate.pfx", $certificatePfxPassword)
+$certificatePfxFile = "c:\demo\certificate.pfx"
+$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificatePfxFile, $certificatePfxPassword)
 $certificateThumbprint = $cert.Thumbprint
 Write-Host "Certificate File Thumbprint $certificateThumbprint"
 if (!(Get-Item Cert:\LocalMachine\my\$certificateThumbprint -ErrorAction SilentlyContinue)) {
