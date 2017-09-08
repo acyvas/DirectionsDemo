@@ -87,6 +87,17 @@ New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${
 
 $winClientFolder = (Get-Item "C:\Program Files (x86)\Microsoft Dynamics NAV\*\RoleTailored Client").FullName
 if ($winClientFolder) {
+
+    $vcRedistUrl = "https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x86.exe"
+    $vcRedistFile = "C:\DOWNLOAD\vcredist_x86.exe"
+    (New-Object System.Net.WebClient).DownloadFile($vcRedistUrl, $vcRedistFile)
+    Start-Process $vcRedistFile -argumentList "/q" -wait
+    
+    $sqlncliUrl = "https://download.microsoft.com/download/B/E/D/BED73AAC-3C8A-43F5-AF4F-EB4FEA6C8F3A/1033/x86/sqlncli.msi"
+    $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
+    (New-Object System.Net.WebClient).DownloadFile($sqlncliUrl, $sqlncliFile)
+    Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
+
     $ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
     [System.IO.File]::ReadAllText($customConfigFile)'
     [xml]$customConfig = docker exec navserver powershell $ps
