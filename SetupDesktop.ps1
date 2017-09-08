@@ -30,6 +30,8 @@ function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$Workin
     $Shortcut.save()
 }
 
+Log -color Green "Setting up Desktop Experience"
+
 # Enable File Download in IE
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1803" -Value 0

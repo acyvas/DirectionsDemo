@@ -1,14 +1,17 @@
 #usage initialize.ps1
 param
 (
-       [string]$templateLink     = "https://raw.githubusercontent.com/NAVDEMO/DOCKER/master/navdeveloperpreview.json",
-       [string]$hostName         = "",
-       [string]$vmAdminUsername  = "vmadmin",
-       [string]$navAdminUsername = "admin",
-       [string]$adminPassword    = "P@ssword1",
-       [string]$country          = "us",
-       [string]$navVersion       = "devpreview",
-       [string]$licenseFileUri   = ""
+       [string]$templateLink           = "https://raw.githubusercontent.com/NAVDEMO/DOCKER/master/navdeveloperpreview.json",
+       [string]$hostName               = "",
+       [string]$vmAdminUsername        = "vmadmin",
+       [string]$navAdminUsername       = "admin",
+       [string]$adminPassword          = "P@ssword1",
+       [string]$country                = "us",
+       [string]$navVersion             = "devpreview",
+       [string]$licenseFileUri         = "",
+       [string]$certificatePfxUrl      = "",
+       [string]$certificatePfxPassword = "",
+       [string]$publicDnsName          = ""
 )
 
 $includeWindowsClient = $true
@@ -62,8 +65,11 @@ docker pull microsoft/windowsservercore
 Log "pulling $imageName"
 docker pull $imageName
 
+$settingsScript = "c:\demo\settings.ps1"
 $setupDesktopScript = "c:\demo\SetupDesktop.ps1"
+$setupVmScript = "c:\demo\SetupVm.ps1"
 $setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
+
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
@@ -72,8 +78,28 @@ DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\h
 DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
 DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
 DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
+DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1" -destinationFile $setupDesktopScript
+DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
+
 if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
+}
+
+if ($certificatePfxUrl -ne "" -and $certificatePfxPassword -ne "" -and $publicDnsName -ne "") {
+    DownloadFile -sourceUrl $certificatePfxUrl -destinationFile "c:\demo\certificate.pfx"
+
+('$certificatePfxPassword = "'+$certificatePfxPassword+'"
+$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2("c:\demo\certificate.pfx", $certificatePfxPassword)
+$certificateThumbprint = $cert.Thumbprint
+Write-Host "Certificate File Thumbprint $certificateThumbprint"
+if (!(Get-Item Cert:\LocalMachine\my\$certificateThumbprint -ErrorAction SilentlyContinue)) {
+    Write-Host "Import Certificate to LocalMachine\my"
+    Import-PfxCertificate -FilePath $certificatePfxFile -CertStoreLocation cert:\localMachine\my -Password (ConvertTo-SecureString -String $certificatePfxPassword -AsPlainText -Force) | Out-Null
+}
+Remove-Item "c:\demo\certificate.pfx" -force
+Remove-Item "c:\run\my\SetupCertificate.ps1" -force
+') | Add-Content "c:\myfolder\SetupCertificate.ps1"
+$hostname = $publicDnsName
 }
 
 $containerName = "navserver"
@@ -83,20 +109,28 @@ if ($hostName -eq "") {
     $useSSL = "N"
 }
 
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupDesktopScript
-('$containerName = "' + $containerName + '"')         | Add-Content $setupDesktopScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupDesktop.ps1") | Add-Content $setupDesktopScript
-
-('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
-('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupNavContainerScript
-('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
-('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
-('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupNavContainer.ps1") | Add-Content $setupNavContainerScript
+('$imageName = "' + $imageName + '"')                 | Set-Content $settingsScript
+('$Country = "' + $Country + '"')                     | Add-Content $settingsScript
+('$hostName = "' + $hostName + '"')                   | Add-Content $settingsScript
+('$containerName = "' + $containerName + '"')         | Add-Content $settingsScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $settingsScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
 . $setupNavContainerScript
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
-$trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "SetupDesktop" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
+$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "SetupDesktop" `
+                       -Action $logonAction `
+                       -Trigger $logonTrigger `
+                       -RunLevel Highest `
+                       -User $vmAdminUsername | Out-Null
+
+$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupVmScript"
+$startupTrigger = New-ScheduledTaskTrigger -AtStartup
+Register-ScheduledTask -TaskName "SetupDesktop" `
+                       -Action $startupAction `
+                       -Trigger $startupTrigger `
+                       -RunLevel Highest `
+                       -User $vmAdminUsername `
+                       -Password $adminPassword | Out-Null

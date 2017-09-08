@@ -59,6 +59,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --volume   c:\demo:c:\demo `
                           --volume   c:\myfolder:c:\run\my `
                           --volume   "C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles" `
+                          --restart  always `
                           --detach `
                           $imageName
 
