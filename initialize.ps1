@@ -35,7 +35,7 @@ New-Item -Path "C:\DEMO" -ItemType Directory -ErrorAction Ignore | Out-Null
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 
-Log("Starting initialization")
+Log -color Green "Starting initialization"
 Log("TemplateLink: $templateLink")
 
 Log("Upgrading Docker Engine")
@@ -120,7 +120,7 @@ if ($hostName -eq "") {
 
 . $setupNavContainerScript
 
-$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
+$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Action $logonAction `
@@ -128,11 +128,10 @@ Register-ScheduledTask -TaskName "SetupDesktop" `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
 
-$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupVmScript"
+$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
 $startupTrigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -TaskName "SetupVm" `
                        -Action $startupAction `
                        -Trigger $startupTrigger `
                        -RunLevel Highest `
-                       -User $vmAdminUsername `
-                       -Password $adminPassword | Out-Null
+                       -User System | Out-Null

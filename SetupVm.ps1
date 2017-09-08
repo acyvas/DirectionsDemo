@@ -2,9 +2,13 @@
 
 Log "Setup VM"
 
-. c:\demo\setupDesktop.ps1
-
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupVm -ErrorAction Ignore) {
     schtasks /DELETE /TN setupVm /F | Out-Null
 }
+
+Log "Set password"
+Set-ScheduledTask -TaskName SetupDesktop -Password Pepsimax4ever
+Log "Start task"
+Start-ScheduledTask -TaskName SetupDesktop
+log "done"
