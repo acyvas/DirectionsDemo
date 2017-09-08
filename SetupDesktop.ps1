@@ -10,22 +10,24 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$WorkingDirectory = "", [string]$IconLocation = "", [string]$Arguments = "")
 {
     $filename = "C:\Users\Public\Desktop\$Name.lnk"
-    if (!(Test-Path -Path $filename)) {
-        $Shell =  New-object -comobject WScript.Shell
-        $Shortcut = $Shell.CreateShortcut($filename)
-        $Shortcut.TargetPath = $TargetPath
-        if (!$WorkingDirectory) {
-            $WorkingDirectory = Split-Path $TargetPath
-        }
-        $Shortcut.WorkingDirectory = $WorkingDirectory
-        if ($Arguments) {
-            $Shortcut.Arguments = $Arguments
-        }
-        if ($IconLocation) {
-            $Shortcut.IconLocation = $IconLocation
-        }
-        $Shortcut.save()
+    if (Test-Path -Path $filename) {
+        Remove-Item $filename -force
     }
+
+    $Shell =  New-object -comobject WScript.Shell
+    $Shortcut = $Shell.CreateShortcut($filename)
+    $Shortcut.TargetPath = $TargetPath
+    if (!$WorkingDirectory) {
+        $WorkingDirectory = Split-Path $TargetPath
+    }
+    $Shortcut.WorkingDirectory = $WorkingDirectory
+    if ($Arguments) {
+        $Shortcut.Arguments = $Arguments
+    }
+    if ($IconLocation) {
+        $Shortcut.IconLocation = $IconLocation
+    }
+    $Shortcut.save()
 }
 
 # Enable File Download in IE
@@ -82,7 +84,23 @@ Log "Creating Desktop Shortcuts"
 New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
+
+$winClientFolder = (Get-Item "C:\Program Files (x86)\Microsoft Dynamics NAV\*\RoleTailored Client").FullName
+if ($winClientFolder) {
+    $ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
+    [System.IO.File]::ReadAllText($customConfigFile)'
+    [xml]$customConfig = docker exec navserver powershell $ps
+    $databaseInstance = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseInstance']").Value
+    $databaseName = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseName']").Value
+    $CredentialType = $customConfig.SelectSingleNode("//appSettings/add[@key='ClientServicesCredentialType']").Value
+    if ($CredentialType -eq "Windows") { $ntauth = "yes" } else { $ntauth = "no" }
+    $databaseServer = "navserver"
+    if ($databaseInstance) { $databaseServer += "\$databaseInstance" }
+
+    New-DesktopShortcut -Name "Windows Client"           -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
+    New-DesktopShortcut -Name "FinSql"                   -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=$ntauth, username=sa"
+}
+New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                              -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
 New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
 
 Log "Cleanup"
@@ -97,3 +115,4 @@ if (Get-ScheduledTask -TaskName setupScript -ErrorAction Ignore) {
 
 Start-Process "http://${hostname}"
 Start-Process "http://aka.ms/moderndevtools"
+

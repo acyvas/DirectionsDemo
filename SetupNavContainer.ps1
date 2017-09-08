@@ -1,15 +1,4 @@
-﻿
-function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
-
-# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
-'$wwwRootPath = Get-WWWRootPath
-$httpPath = Join-Path $wwwRootPath "http"
-Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
-if ($hostname -ne "") {
-"full address:s:${hostname}:3389
-prompt for credentials:i:1
-username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
-}' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 docker ps --filter name=$containerName -a -q | % {
     Log "Removing container $containerName"
@@ -22,6 +11,40 @@ switch ($country) {
 "CA"    { $locale = "en-CA" }
 "GB"    { $locale = "en-GB" }
 default { $locale = "en-US" }
+}
+
+if (Test-Path "C:\Program Files (x86)\Microsoft Dynamics NAV") {
+    Remove-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -Force -Recurse -ErrorAction Ignore
+}
+New-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -ItemType Directory -ErrorAction Ignore | Out-Null
+
+# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
+'$wwwRootPath = Get-WWWRootPath
+$httpPath = Join-Path $wwwRootPath "http"
+Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
+if ($hostname -ne "") {
+"full address:s:${hostname}:3389
+prompt for credentials:i:1
+username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
+}
+' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+
+$navpfilesparameter = @{}
+if ($includeWindowsClient) {
+    'Copy-Item -Path "C:\Program Files (x86)\Microsoft Dynamics NAV\*" -Destination "c:\navpfiles" -Recurse -Force -ErrorAction Ignore
+    $destFolder = (Get-Item "c:\navpfiles\*\RoleTailored Client").FullName
+    $ClientUserSettingsFileName = "$runPath\ClientUserSettings.config"
+    [xml]$ClientUserSettings = Get-Content $clientUserSettingsFileName
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Server""]").value = "$hostname"
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServerInstance""]").value="NAV"
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServicesCertificateValidationEnabled""]").value="false"
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesPort""]").value="$publicWinClientPort"
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ACSUri""]").value = ""
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""DnsIdentity""]").value = "$dnsIdentity"
+    $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesCredentialType""]").value = "$Auth"
+    $clientUserSettings.Save("$destFolder\ClientUserSettings.config")
+    ' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+    $navpfilesparameter = @{ v = """C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles""" }
 }
 
 Log "Running $imageName"
@@ -37,6 +60,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --env      locale=$locale `
                           --volume   c:\demo:c:\demo `
                           --volume   c:\myfolder:c:\run\my `
+                          @navpfilesparameter `
                           --detach `
                           $imageName
 
