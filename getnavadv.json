@@ -47,8 +47,9 @@
 		  "type": "string",
           "defaultValue": "",
           "metadata": {
-          "Description": "Optional: Specify a secure Url of your NAV Partner License File for the developer preview. If you do not specify a license file Url here, you will have to upload the license manually later."
-        },
+            "Description": "Optional: Specify a secure Url of your NAV Partner License File for the developer preview. If you do not specify a license file Url here, you will have to upload the license manually later."
+          }
+		},
 	    "CertificatePfxUrl": {
 	      "type": "string",
           "defaultValue": "",
