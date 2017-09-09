@@ -11,8 +11,15 @@ param
        [string]$licenseFileUri         = "",
        [string]$certificatePfxUrl      = "",
        [string]$certificatePfxPassword = "",
-       [string]$publicDnsName          = ""
+       [string]$publicDnsName          = "",
+       [string]$style                  = "devpreview"
 )
+
+#
+# styles:
+#   devpreview
+#   workshop
+#
 
 $includeWindowsClient = $true
 
@@ -79,8 +86,11 @@ DownloadFile -sourceUrl "${scriptPath}status.aspx"           -destinationFile "c
 DownloadFile -sourceUrl "${scriptPath}Line.png"              -destinationFile "c:\demo\http\Line.png"
 DownloadFile -sourceUrl "${scriptPath}Microsoft.png"         -destinationFile "c:\demo\http\Microsoft.png"
 DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1"      -destinationFile $setupDesktopScript
-DownloadFile -sourceUrl "${scriptPath}SetupVm.ps1"           -destinationFile $setupVmScript
 DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
+
+if ($style -eq "workshop") {
+    DownloadFile -sourceUrl "${scriptPath}SetupVm.ps1"           -destinationFile $setupVmScript
+}
 
 if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
@@ -113,9 +123,11 @@ if ($hostName -eq "") {
 
 ('$imageName = "' + $imageName + '"')                 | Set-Content $settingsScript
 ('$Country = "' + $Country + '"')                     | Add-Content $settingsScript
+('$style = "' + $style + '"')                         | Add-Content $settingsScript
 ('$hostName = "' + $hostName + '"')                   | Add-Content $settingsScript
 ('$containerName = "' + $containerName + '"')         | Add-Content $settingsScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $settingsScript
+('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
 . $setupNavContainerScript
@@ -128,10 +140,12 @@ Register-ScheduledTask -TaskName "SetupDesktop" `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
 
-$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
-$startupTrigger = New-ScheduledTaskTrigger -AtStartup
-Register-ScheduledTask -TaskName "SetupVm" `
-                       -Action $startupAction `
-                       -Trigger $startupTrigger `
-                       -RunLevel Highest `
-                       -User System | Out-Null
+if ($style -eq "workshop") {
+    $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
+    $startupTrigger = New-ScheduledTaskTrigger -AtStartup
+    Register-ScheduledTask -TaskName "SetupVm" `
+                           -Action $startupAction `
+                           -Trigger $startupTrigger `
+                           -RunLevel Highest `
+                           -User System | Out-Null
+}

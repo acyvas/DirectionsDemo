@@ -2,7 +2,9 @@
 
 Log "Setup VM"
 
-# Remove Scheduled Task
+. (Join-Path $PSScriptRoot "settings.ps1")
+
+# Remove Scheduled Tasks
 if (Get-ScheduledTask -TaskName setupVm -ErrorAction Ignore) {
     schtasks /DELETE /TN setupVm /F | Out-Null
 }
@@ -10,16 +12,13 @@ if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
     schtasks /DELETE /TN setupDesktop /F | Out-Null
 }
 
-Log "Register task"
+# Re-register with username+password and start now
+
+Log "Launch Desktop Setup"
 $onceAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "c:\demo\setupdesktop.ps1"
-$onceTrigger = New-ScheduledTaskTrigger -Once
 Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Action $onceAction `
-                       -Trigger $onceTrigger `
                        -RunLevel Highest `
-                       -User vmadmin `
-                       -Password Pepsimax4ever | Out-Null
-
-Log "Start task"
+                       -User $vmAdminUsername `
+                       -Password $adminPassword | Out-Null
 Start-ScheduledTask -TaskName SetupDesktop
-log "done"

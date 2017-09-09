@@ -118,4 +118,4 @@ do {
 Log -color Green "Container output"
 docker logs navserver | % { log $_ }
 
-
+Log -color Green "Container setup complete!"

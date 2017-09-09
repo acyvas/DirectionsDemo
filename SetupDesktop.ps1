@@ -1,5 +1,7 @@
 ﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt"; Write-Host -ForegroundColor $color $line }
 
+. (Join-Path $PSScriptRoot "settings.ps1")
+
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
     Log("Downloading '$sourceUrl'")
@@ -119,6 +121,32 @@ if ($winClientFolder) {
 New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                              -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
 New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
 
+if ($style -eq "workshop") {
+    Log "Patching landing page"
+    $s = [System.IO.File]::ReadAllText("C:\DEMO\http\Default.aspx")
+    [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions US 2017 NAV Workshop VM'))
+
+    try {
+        $Folder = "C:\DOWNLOAD\VisualStudio2017Enterprise"
+        $Filename = "$Folder\vs_enterprise.exe"
+        New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
+        
+        if (!(Test-Path $Filename)) {
+            Log "Downloading Visual Studio 2017 Enterprise Setup Program"
+            $WebClient = New-Object System.Net.WebClient
+            $WebClient.DownloadFile("https://aka.ms/vs/15/release/vs_enterprise.exe", $Filename)
+        }
+        
+        Log "Installing Visual Studio 2017 Enterprise"
+        $setupParameters = “--quiet --norestart"
+        Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
+        
+        Start-Sleep -Seconds 10
+    } catch {
+        Log -color Red -line ($Error[0].ToString() + " (" + ($Error[0].ScriptStackTrace -split '\r\n')[0] + ")")
+    }
+}
+
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
@@ -132,3 +160,4 @@ if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
 Start-Process "http://${hostname}"
 Start-Process "http://aka.ms/moderndevtools"
 
+Log -color Green "Desktop setup complete!"
