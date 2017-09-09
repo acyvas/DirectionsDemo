@@ -108,6 +108,10 @@ if (!(Get-Item Cert:\LocalMachine\my\$certificateThumbprint -ErrorAction Silentl
     Write-Host "Import Certificate to LocalMachine\my"
     Import-PfxCertificate -FilePath $certificatePfxFile -CertStoreLocation cert:\localMachine\my -Password (ConvertTo-SecureString -String $certificatePfxPassword -AsPlainText -Force) | Out-Null
 }
+$dnsidentity = $cert.GetNameInfo("SimpleName",$false)
+if ($dnsidentity.StartsWith("*")) {
+    $dnsidentity = $dnsidentity.Substring($dnsidentity.IndexOf(".")+1)
+}
 Remove-Item $certificatePfxFile -force
 Remove-Item "c:\run\my\SetupCertificate.ps1" -force
 ') | Add-Content "c:\myfolder\SetupCertificate.ps1"

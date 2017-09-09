@@ -99,7 +99,7 @@ if ($winClientFolder) {
     Start-Process $vcRedistFile -argumentList "/q" -wait
     
     Log "Installing SQL Native Client"
-    $sqlncliUrl = "https://download.microsoft.com/download/B/E/D/BED73AAC-3C8A-43F5-AF4F-EB4FEA6C8F3A/1033/x86/sqlncli.msi"
+    $sqlncliUrl = "https://download.microsoft.com/download/3/A/6/3A632674-A016-4E31-A675-94BE390EA739/ENU/x64/sqlncli.msi"
     $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
     (New-Object System.Net.WebClient).DownloadFile($sqlncliUrl, $sqlncliFile)
     Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
@@ -125,6 +125,7 @@ if ($style -eq "workshop") {
     Log "Patching landing page"
     $s = [System.IO.File]::ReadAllText("C:\DEMO\http\Default.aspx")
     [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions US 2017 NAV Workshop VM'))
+    docker exec navserver powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
 
     try {
         $Folder = "C:\DOWNLOAD\VisualStudio2017Enterprise"
