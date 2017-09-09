@@ -50,6 +50,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --name     $containerName `
                           --publish  80:8080 `
                           --publish  443:443 `
+						  --publish  1433:1433 `
                           --publish  7046-7049:7046-7049 `
                           --env      publicFileSharePort=80 `
                           --env      username="$navAdminUsername" `
