@@ -1,21 +1,33 @@
 #usage initialize.ps1
 param
 (
-       [string]$templateLink     = "https://raw.githubusercontent.com/NAVDEMO/DOCKER/master/navdeveloperpreview.json",
-       [string]$hostName         = "",
-       [string]$vmAdminUsername  = "vmadmin",
-       [string]$navAdminUsername = "admin",
-       [string]$adminPassword    = "P@ssword1",
-       [string]$country          = "us",
-       [string]$navVersion       = "devpreview",
-       [string]$licenseFileUri   = ""
+       [string]$templateLink           = "https://raw.githubusercontent.com/NAVDEMO/DOCKER/master/navdeveloperpreview.json",
+       [string]$hostName               = "",
+       [string]$vmAdminUsername        = "vmadmin",
+       [string]$navAdminUsername       = "admin",
+       [string]$adminPassword          = "P@ssword1",
+       [string]$country                = "us",
+       [string]$navVersion             = "devpreview",
+       [string]$licenseFileUri         = "",
+       [string]$certificatePfxUrl      = "",
+       [string]$certificatePfxPassword = "",
+       [string]$publicDnsName          = "",
+       [string]$style                  = "devpreview"
 )
+
+#
+# styles:
+#   devpreview
+#   workshop
+#
+
+$includeWindowsClient = $true
 
 function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
-    Log("Downloading '$sourceUrl' to '$destinationFile'")
+    Log("Downloading $destinationFile")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
@@ -30,7 +42,7 @@ New-Item -Path "C:\DEMO" -ItemType Directory -ErrorAction Ignore | Out-Null
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 
-Log("Starting initialization")
+Log -color Green "Starting initialization"
 Log("TemplateLink: $templateLink")
 
 Log("Upgrading Docker Engine")
@@ -60,41 +72,81 @@ docker pull microsoft/windowsservercore
 Log "pulling $imageName"
 docker pull $imageName
 
+$settingsScript = "c:\demo\settings.ps1"
 $setupDesktopScript = "c:\demo\SetupDesktop.ps1"
+$setupVmScript = "c:\demo\SetupVm.ps1"
 $setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
+
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
-DownloadFile -sourceUrl "${scriptPath}Default.aspx"  -destinationFile "c:\demo\http\Default.aspx"
-DownloadFile -sourceUrl "${scriptPath}status.aspx"   -destinationFile "c:\demo\http\status.aspx"
-DownloadFile -sourceUrl "${scriptPath}Line.png"      -destinationFile "c:\demo\http\Line.png"
-DownloadFile -sourceUrl "${scriptPath}Microsoft.png" -destinationFile "c:\demo\http\Microsoft.png"
+DownloadFile -sourceUrl "${scriptPath}Default.aspx"          -destinationFile "c:\demo\http\Default.aspx"
+DownloadFile -sourceUrl "${scriptPath}status.aspx"           -destinationFile "c:\demo\http\status.aspx"
+DownloadFile -sourceUrl "${scriptPath}Line.png"              -destinationFile "c:\demo\http\Line.png"
+DownloadFile -sourceUrl "${scriptPath}Microsoft.png"         -destinationFile "c:\demo\http\Microsoft.png"
+DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1"      -destinationFile $setupDesktopScript
+DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
+
+if ($style -eq "workshop") {
+    DownloadFile -sourceUrl "${scriptPath}SetupVm.ps1"           -destinationFile $setupVmScript
+}
+
 if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
 }
 
-$containerName = "navserver"
-$useSSL = "Y"
-if ($hostName -eq "") { 
-    $hostName = $containerName
-    $useSSL = "N"
+if ($certificatePfxUrl -ne "" -and $certificatePfxPassword -ne "" -and $publicDnsName -ne "") {
+    DownloadFile -sourceUrl $certificatePfxUrl -destinationFile "c:\demo\certificate.pfx"
+
+('$certificatePfxPassword = "'+$certificatePfxPassword+'"
+$certificatePfxFile = "c:\demo\certificate.pfx"
+$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certificatePfxFile, $certificatePfxPassword)
+$certificateThumbprint = $cert.Thumbprint
+Write-Host "Certificate File Thumbprint $certificateThumbprint"
+if (!(Get-Item Cert:\LocalMachine\my\$certificateThumbprint -ErrorAction SilentlyContinue)) {
+    Write-Host "Import Certificate to LocalMachine\my"
+    Import-PfxCertificate -FilePath $certificatePfxFile -CertStoreLocation cert:\localMachine\my -Password (ConvertTo-SecureString -String $certificatePfxPassword -AsPlainText -Force) | Out-Null
+}
+$dnsidentity = $cert.GetNameInfo("SimpleName",$false)
+if ($dnsidentity.StartsWith("*")) {
+    $dnsidentity = $dnsidentity.Substring($dnsidentity.IndexOf(".")+1)
+}
+Remove-Item $certificatePfxFile -force
+Remove-Item "c:\run\my\SetupCertificate.ps1" -force
+') | Add-Content "c:\myfolder\SetupCertificate.ps1"
+} else {
+    $publicDnsName = $hostname
 }
 
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupDesktopScript
-('$containerName = "' + $containerName + '"')         | Add-Content $setupDesktopScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupDesktop.ps1") | Add-Content $setupDesktopScript
+$containerName = "navserver"
 
-('$imageName = "' + $imageName + '"')                 | Add-Content $setupNavContainerScript
-('$Country = "' + $Country + '"')                     | Add-Content $setupNavContainerScript
-('$hostName = "' + $hostName + '"')                   | Add-Content $setupNavContainerScript
-('$containerName = "' + $containerName + '"')         | Add-Content $setupNavContainerScript
-('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $setupNavContainerScript
-('$adminPassword = "' + $adminPassword + '"')         | Add-Content $setupNavContainerScript
-(New-Object System.Net.WebClient).DownloadString("${scriptPath}SetupNavContainer.ps1") | Add-Content $setupNavContainerScript
+('$imageName = "' + $imageName + '"')                 | Set-Content $settingsScript
+('$Country = "' + $Country + '"')                     | Add-Content $settingsScript
+('$style = "' + $style + '"')                         | Add-Content $settingsScript
+('$hostName = "' + $hostName + '"')                   | Add-Content $settingsScript
+('$publicDnsName = "' + $publicDnsName + '"')         | Add-Content $settingsScript
+('$containerName = "' + $containerName + '"')         | Add-Content $settingsScript
+('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $settingsScript
+('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
+('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
 . $setupNavContainerScript
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit $setupDesktopScript"
-$trigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "SetupDesktop" -Action $action -Trigger $trigger -RunLevel Highest -User $vmAdminUsername | Out-Null
+$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "SetupDesktop" `
+                       -Action $logonAction `
+                       -Trigger $logonTrigger `
+                       -RunLevel Highest `
+                       -User $vmAdminUsername | Out-Null
+
+if ($style -eq "workshop") {
+    $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
+    $startupTrigger = New-ScheduledTaskTrigger -AtStartup
+    Register-ScheduledTask -TaskName "SetupVm" `
+                           -Action $startupAction `
+                           -Trigger $startupTrigger `
+                           -RunLevel Highest `
+                           -User System | Out-Null
+}
