@@ -1,5 +1,7 @@
 ﻿function Log([string]$line, [string]$color = "Gray") { ("<font color=""$color"">" + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
+. (Join-Path $PSScriptRoot "settings.ps1")
+
 docker ps --filter name=$containerName -a -q | % {
     Log "Removing container $containerName"
     docker rm $_ -f | Out-Null
@@ -30,11 +32,11 @@ if (Test-Path "C:\Program Files (x86)\Microsoft Dynamics NAV") {
 }
 New-Item "C:\Program Files (x86)\Microsoft Dynamics NAV" -ItemType Directory -ErrorAction Ignore | Out-Null
 
-'Copy-Item -Path "C:\Program Files (x86)\Microsoft Dynamics NAV\*" -Destination "c:\navpfiles" -Recurse -Force -ErrorAction Ignore
+('Copy-Item -Path "C:\Program Files (x86)\Microsoft Dynamics NAV\*" -Destination "c:\navpfiles" -Recurse -Force -ErrorAction Ignore
 $destFolder = (Get-Item "c:\navpfiles\*\RoleTailored Client").FullName
 $ClientUserSettingsFileName = "$runPath\ClientUserSettings.config"
 [xml]$ClientUserSettings = Get-Content $clientUserSettingsFileName
-$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Server""]").value = "$hostname"
+$clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Server""]").value = "'+$containerName+'"
 $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServerInstance""]").value="NAV"
 $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ServicesCertificateValidationEnabled""]").value="false"
 $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesPort""]").value="$publicWinClientPort"
@@ -42,15 +44,17 @@ $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ACS
 $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""DnsIdentity""]").value = "$dnsIdentity"
 $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""ClientServicesCredentialType""]").value = "$Auth"
 $clientUserSettings.Save("$destFolder\ClientUserSettings.config")
-' | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
+') | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
+$ip = "172.25.1.1"
 Log "Running $imageName"
 $containerId = docker run --env      accept_eula=Y `
-                          --hostname $hostName `
+                          --hostname $containerName `
+                          --ip       $ip `
+                          --add-host ${containerName}:$ip `
                           --name     $containerName `
                           --publish  80:8080 `
                           --publish  443:443 `
-						  --publish  1433:1433 `
                           --publish  7046-7049:7046-7049 `
                           --env      publicFileSharePort=80 `
                           --env      username="$navAdminUsername" `
@@ -75,19 +79,11 @@ do {
     $healthy = $status.Contains('healthy')
 } while (!$healthy)
 
-if ($containerName -ne $hostName) {
-    # Add Container IP Address to Hosts file as $containername
-    Log "Adding $containerName to hosts file"
-    $s = docker inspect $containerId
-    $IPAddress = ([string]::Join(" ", $s) | ConvertFrom-Json).NetworkSettings.Networks.nat.IPAddress
-    " $IPAddress $containerName" | Set-Content -Path "c:\windows\system32\drivers\etc\hosts" -Force
-}
-
 # Copy .vsix and Certificate to C:\Demo
 Log "Copying .vsix and Certificate to C:\Demo"
 Remove-Item "C:\Demo\*.vsix" -Force
 Remove-Item "C:\Demo\*.cer" -Force
-docker exec -it navserver powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
+docker exec -it $containerName powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Demo' -force
 copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Demo' -force"
 $certFileName = (Get-Item "C:\Demo\*.cer").FullName
 
@@ -104,7 +100,7 @@ if ($certFileName) {
 
 if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
     Log "Importing license file"
-    docker exec -it navserver powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
+    docker exec -it $containerName powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
 Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
 }
 
@@ -112,11 +108,11 @@ Log "Waiting for container to become ready, this will only take a few minutes"
 $cnt = 150
 do {
     Start-Sleep -Seconds 2
-    $logs = docker logs navserver 
+    $logs = docker logs $containerName 
     $log = [string]::Join(" ",$logs)
 } while ($cnt-- -gt 0 -and !($log.Contains("Ready for connections!")))
 
 Log -color Green "Container output"
-docker logs navserver | % { log $_ }
+docker logs $containerName | % { log $_ }
 
 Log -color Green "Container setup complete!"

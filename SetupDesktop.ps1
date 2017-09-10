@@ -107,12 +107,12 @@ if ($winClientFolder) {
     Log "Creating Windows Client configuration file"
     $ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
     [System.IO.File]::ReadAllText($customConfigFile)'
-    [xml]$customConfig = docker exec navserver powershell $ps
+    [xml]$customConfig = docker exec $containerName powershell $ps
     $databaseInstance = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseInstance']").Value
     $databaseName = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseName']").Value
     $CredentialType = $customConfig.SelectSingleNode("//appSettings/add[@key='ClientServicesCredentialType']").Value
     if ($CredentialType -eq "Windows") { $ntauth = "yes" } else { $ntauth = "no" }
-    $databaseServer = "navserver"
+    $databaseServer = "$containerName"
     if ($databaseInstance) { $databaseServer += "\$databaseInstance" }
 
     New-DesktopShortcut -Name "Windows Client"           -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
@@ -125,7 +125,7 @@ if ($style -eq "workshop") {
     Log "Patching landing page"
     $s = [System.IO.File]::ReadAllText("C:\DEMO\http\Default.aspx")
     [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions US 2017 NAV Workshop VM'))
-    docker exec navserver powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
+    docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
 
     try {
         $Folder = "C:\DOWNLOAD\VisualStudio2017Enterprise"
