@@ -85,9 +85,9 @@ if ($vsixFileName -ne "") {
 }
 
 Log "Creating Desktop Shortcuts"
-New-DesktopShortcut -Name "Landing Page"                 -TargetPath "http://${hostname}"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-New-DesktopShortcut -Name "Visual Studio Code"           -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-New-DesktopShortcut -Name "Web Client"                   -TargetPath "https://${hostname}/NAV/"                             -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Landing Page" -TargetPath "http://${publicDnsName}" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Visual Studio Code" -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+New-DesktopShortcut -Name "Web Client" -TargetPath "https://${publicDnsName}/NAV/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 
 $winClientFolder = (Get-Item "C:\Program Files (x86)\Microsoft Dynamics NAV\*\RoleTailored Client").FullName
 if ($winClientFolder) {
@@ -158,7 +158,7 @@ if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
     schtasks /DELETE /TN setupDesktop /F | Out-Null
 }
 
-Start-Process "http://${hostname}"
+Start-Process "http://${publicDnsName}"
 Start-Process "http://aka.ms/moderndevtools"
 
 Log -color Green "Desktop setup complete!"

@@ -19,8 +19,8 @@ default { $locale = "en-US" }
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
 Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
-if ($hostname -ne "") {
-"full address:s:${hostname}:3389
+if ($publicDnsName -ne "") {
+"full address:s:${publicDnsName}:3389
 prompt for credentials:i:1
 username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
 }
@@ -46,12 +46,10 @@ $clientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key=""Cli
 $clientUserSettings.Save("$destFolder\ClientUserSettings.config")
 ') | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
-$ip = "172.25.1.1"
 Log "Running $imageName"
 $containerId = docker run --env      accept_eula=Y `
                           --hostname $containerName `
-                          --ip       $ip `
-                          --add-host ${containerName}:$ip `
+                          --env      PublicDnsName=$publicdnsName `
                           --name     $containerName `
                           --publish  80:8080 `
                           --publish  443:443 `
@@ -59,7 +57,7 @@ $containerId = docker run --env      accept_eula=Y `
                           --env      publicFileSharePort=80 `
                           --env      username="$navAdminUsername" `
                           --env      password="$adminPassword" `
-                          --env      useSSL=$useSSL `
+                          --env      useSSL=Y `
                           --env      locale=$locale `
                           --volume   c:\demo:c:\demo `
                           --volume   c:\myfolder:c:\run\my `

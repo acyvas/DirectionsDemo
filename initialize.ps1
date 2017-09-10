@@ -115,20 +115,17 @@ if ($dnsidentity.StartsWith("*")) {
 Remove-Item $certificatePfxFile -force
 Remove-Item "c:\run\my\SetupCertificate.ps1" -force
 ') | Add-Content "c:\myfolder\SetupCertificate.ps1"
-$hostname = $publicDnsName
+} else {
+    $publicDnsName = $hostname
 }
 
 $containerName = "navserver"
-$useSSL = "Y"
-if ($hostName -eq "") { 
-    $hostName = $containerName
-    $useSSL = "N"
-}
 
 ('$imageName = "' + $imageName + '"')                 | Set-Content $settingsScript
 ('$Country = "' + $Country + '"')                     | Add-Content $settingsScript
 ('$style = "' + $style + '"')                         | Add-Content $settingsScript
 ('$hostName = "' + $hostName + '"')                   | Add-Content $settingsScript
+('$publicDnsName = "' + $publicDnsName + '"')         | Add-Content $settingsScript
 ('$containerName = "' + $containerName + '"')         | Add-Content $settingsScript
 ('$navAdminUsername = "' + $navAdminUsername + '"')   | Add-Content $settingsScript
 ('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
