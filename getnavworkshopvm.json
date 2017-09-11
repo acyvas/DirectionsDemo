@@ -83,7 +83,7 @@
 		  "type": "string",
           "defaultValue": "",
           "metadata": {
-            "Description": "Optional: Specify a secure Url to a .zip file containing the content of C:\WORKSHOPFILES on the VM."
+            "Description": "Optional: Specify a secure Url to a .zip file containing the content of C:\\WORKSHOPFILES on the VM."
           }
 		}
     },
