@@ -12,6 +12,7 @@ param
        [string]$certificatePfxUrl      = "",
        [string]$certificatePfxPassword = "",
        [string]$publicDnsName          = "",
+	   [string]$workshopFilesUrl       = "",
        [string]$style                  = "devpreview"
 )
 
@@ -51,26 +52,31 @@ Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroractio
 Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
 Start-Service docker
 
-$registry = "navdocker.azurecr.io"
-Log("Logging in to $registry")
-docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
-
-$pullImage = "dynamics-nav:$navVersion"
-$country = $country.ToLowerInvariant()
-if ($country -ne "w1") {
-    $pullImage += "-fin$country"
-}
-$imageName = "$registry/$pullImage"
-
 # Turn off IE Enhanced Security Configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
 
+$registry = "navdocker.azurecr.io"
+Log("Logging in to $registry")
+docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
+
 Log "pulling microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
 
-Log "pulling $imageName"
-docker pull $imageName
+$imageName = ""
+$navVersion.Split(',') | % {
+    $pullImage = "$registry/dynamics-nav:$_"
+    $country = $country.ToLowerInvariant()
+    if ($country -ne "w1") {
+        $pullImage += "-fin$country"
+    }
+    if ($imageName -eq "") {
+        $imageName = $pullImage
+    }
+    
+    Log "pulling $pullImage"
+    docker pull $pullImage
+}
 
 $settingsScript = "c:\demo\settings.ps1"
 $setupDesktopScript = "c:\demo\SetupDesktop.ps1"
@@ -94,6 +100,15 @@ if ($style -eq "workshop") {
 
 if ($licenseFileUri -ne "") {
     DownloadFile -sourceUrl $licenseFileUri -destinationFile "c:\demo\license.flf"
+}
+
+if ($workshopFilesUrl -ne "") {
+    $workshopFilesFolder = "c:\WorkshopFiles"
+    $workshopFilesFile = "c:\demo\workshopFiles.zip"
+    New-Item -Path $workshopFilesFolder -ItemType Directory -ErrorAction Ignore
+	DownloadFile -sourceUrl $workshopFilesUrl -destinationFile $workshopFilesFile
+	[Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
+	[System.IO.Compression.ZipFile]::ExtractToDirectory($workshopFilesFile, $workshopFilesFolder)
 }
 
 if ($certificatePfxUrl -ne "" -and $certificatePfxPassword -ne "" -and $publicDnsName -ne "") {

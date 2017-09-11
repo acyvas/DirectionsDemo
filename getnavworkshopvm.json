@@ -78,6 +78,12 @@
           "metadata": {
             "Description": "Public DNS Name (CNAME record pointing to your VM). If you do not specify a public DNS name, you will get a Self Signed Certificate."
           }
+        },
+		"WorkshopFilesUrl": {
+		  "type": "string",
+          "defaultValue": "",
+          "metadata": {
+          "Description": "Optional: Specify a secure Url to a .zip file containing the content of C:\WORKSHOPFILES on the VM."
         }
     },
     "variables": {
