@@ -4,7 +4,7 @@
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
-    Log("Downloading '$sourceUrl'")
+    Log("Downloading $destinationFile")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
@@ -41,6 +41,9 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet
 # Enable Font Download in IE
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
+
+# Do not open Server Manager At Logon
+New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force | Out-Null
 
 $Folder = "C:\DOWNLOAD\VSCode"
 $Filename = "$Folder\VSCodeSetup-stable.exe"
@@ -115,16 +118,18 @@ if ($winClientFolder) {
     $databaseServer = "$containerName"
     if ($databaseInstance) { $databaseServer += "\$databaseInstance" }
 
-    New-DesktopShortcut -Name "Windows Client"           -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
-    New-DesktopShortcut -Name "FinSql"                   -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=$ntauth, username=sa"
+    New-DesktopShortcut -Name "Windows Client" -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
+    New-DesktopShortcut -Name "FinSql" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=$ntauth, username=sa"
 }
-New-DesktopShortcut -Name "Container Command Prompt"     -TargetPath "CMD.EXE"                                              -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
-New-DesktopShortcut -Name "NAV Container PowerShell Prompt"  -TargetPath "CMD.EXE"                                             -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
+New-DesktopShortcut -Name "Container Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
+New-DesktopShortcut -Name "Container PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
+New-DesktopShortcut -Name "PowerShell ISE" -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\powershell_ise.exe" -WorkingDirectory "c:\demo"
+New-DesktopShortcut -Name "Command Prompt" -TargetPath "C:\Windows\system32\cmd.exe" -WorkingDirectory "c:\demo"
 
 if ($style -eq "workshop") {
     Log "Patching landing page"
     $s = [System.IO.File]::ReadAllText("C:\DEMO\http\Default.aspx")
-    [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions US 2017 NAV Workshop VM'))
+    [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions 2017 Workshop VM'))
     docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
 
     try {
