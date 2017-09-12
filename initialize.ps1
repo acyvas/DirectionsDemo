@@ -63,14 +63,14 @@ docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5
 Log "pulling microsoft/windowsservercore"
 docker pull microsoft/windowsservercore
 
+$country = $country.ToLowerInvariant()
 $imageName = ""
 $navVersion.Split(',') | % {
     $pullImage = "$registry/dynamics-nav:$_"
-    $country = $country.ToLowerInvariant()
-    if ($country -ne "w1") {
-        $pullImage += "-fin$country"
-    }
     if ($imageName -eq "") {
+        if ($country -ne "w1") {
+            $pullImage += "-fin$country"
+        }
         $imageName = $pullImage
     }
     
