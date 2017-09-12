@@ -89,7 +89,7 @@ DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\my
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"          -destinationFile "c:\demo\http\Default.aspx"
 DownloadFile -sourceUrl "${scriptPath}status.aspx"           -destinationFile "c:\demo\http\status.aspx"
-DownloadFile -sourceUrl "${scriptPath}Line.png"              -destinationFile "c:\demo\http\Line.png"
+DownloadFile -sourceUrl "${scriptPath}line.png"              -destinationFile "c:\demo\http\line.png"
 DownloadFile -sourceUrl "${scriptPath}Microsoft.png"         -destinationFile "c:\demo\http\Microsoft.png"
 DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1"      -destinationFile $setupDesktopScript
 DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
