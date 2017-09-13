@@ -6,7 +6,7 @@ param
        [string]$vmAdminUsername        = "vmadmin",
        [string]$navAdminUsername       = "admin",
        [string]$adminPassword          = "P@ssword1",
-       [string]$country                = "us",
+       [string]$country                = "finus",
        [string]$navVersion             = "devpreview",
        [string]$licenseFileUri         = "",
        [string]$certificatePfxUrl      = "",
@@ -69,7 +69,7 @@ $navVersion.Split(',') | % {
     $pullImage = "$registry/dynamics-nav:$_"
     if ($imageName -eq "") {
         if ($country -ne "w1") {
-            $pullImage += "-fin$country"
+            $pullImage += "-$country"
         }
         $imageName = $pullImage
     }
