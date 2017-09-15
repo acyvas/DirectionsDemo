@@ -60,9 +60,6 @@ $registry = "navdocker.azurecr.io"
 Log("Logging in to $registry")
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
-Log "pulling microsoft/windowsservercore"
-docker pull microsoft/windowsservercore
-
 $country = $country.ToLowerInvariant()
 $imageName = ""
 $navVersion.Split(',') | % {
