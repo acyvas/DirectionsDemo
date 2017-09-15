@@ -101,7 +101,7 @@
         "subnetName" : "Subnet",
         "subnetPrefix" : "10.0.0.0/24",
         "networkSecurityGroupName": "[concat(parameters('vmName'), '_nsg')]",
-        "virtualNetworkName" : "VNet",
+        "virtualNetworkName" : [concat(parameters('vmName'),'_vnet')]",
         "server1Name" : "[tolower(parameters('vmName'))]",
         "nic1Name" : "[concat(parameters('vmName'),'_nic')]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
