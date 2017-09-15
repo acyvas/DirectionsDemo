@@ -46,11 +46,11 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Log -color Green "Starting initialization"
 Log("TemplateLink: $templateLink")
 
-Log("Upgrading Docker Engine")
-Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
-Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
-Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
-Start-Service docker
+#Log("Upgrading Docker Engine")
+#Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
+#Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
+#Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
+#Start-Service docker
 
 # Turn off IE Enhanced Security Configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
