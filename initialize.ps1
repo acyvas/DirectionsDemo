@@ -71,8 +71,26 @@ $navVersion.Split(',') | % {
         $imageName = $pullImage
     }
     
-    Log "pulling $pullImage"
-    docker pull $pullImage
+    $pulled = $false
+    1..3 | % {
+        if (!$pulled) {
+            try {
+                Log "pulling $pullImage"
+                docker pull $pullImage
+                if ($LastExitCode -eq 0) {
+                    $pulled = $true
+                }
+            } catch {
+            }
+            if (!$pulled) {
+                Start-Sleep -Seconds 120
+            }
+        }
+    }
+    if (!$pulled) {
+        Log "pulling $pullImage"
+        docker pull $pullImage
+    }
 }
 
 $settingsScript = "c:\demo\settings.ps1"
