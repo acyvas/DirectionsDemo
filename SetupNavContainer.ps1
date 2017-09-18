@@ -9,9 +9,40 @@ docker ps --filter name=$containerName -a -q | % {
 
 Set-Content -Path "C:\Demo\Country.txt" -Value $Country
 switch ($country) {
-"DK"    { $locale = "da-DK" }
-"CA"    { $locale = "en-CA" }
-"GB"    { $locale = "en-GB" }
+"finus" { $locale = "en-US" }
+"finca" { $locale = "en-CA" }
+"fingb" { $locale = "en-GB" }
+"findk" { $locale = "da-DK" }
+"at"    { $locale = "de-AT" }
+"au"    { $locale = "en-AU" } 
+"be"    { $locale = "nl-BE" }
+"ch"    { $locale = "de-CH" }
+"cz"    { $locale = "cs-CZ" }
+"de"    { $locale = "de-DE" }
+"dk"    { $locale = "da-DK" }
+"es"    { $locale = "es-ES" }
+"fi"    { $locale = "fi-FI" }
+"fr"    { $locale = "fr-FR" }
+"gb"    { $locale = "en-GB" }
+"in"    { $locale = "en-IN" }
+"is"    { $locale = "is-IS" }
+"it"    { $locale = "it-IT" }
+"na"    { $locale = "en-US" }
+"nl"    { $locale = "nl-NL" }
+"no"    { $locale = "nb-NO" }
+"nz"    { $locale = "en-NZ" }
+"ru"    { $locale = "ru-RU" }
+"se"    { $locale = "sv-SE" }
+"w1"    { $locale = "en-US" }
+"us"    { $locale = "en-US" }
+"mx"    { $locale = "es-MX" }
+"ca"    { $locale = "en-CA" }
+"dech"  { $locale = "de-CH" }
+"frbe"  { $locale = "fr-BE" }
+"frca"  { $locale = "fr-CA" }
+"frch"  { $locale = "fr-CH" }
+"itch"  { $locale = "it-CH" }
+"nlbe"  { $locale = "nl-BE" }
 default { $locale = "en-US" }
 }
 
@@ -23,6 +54,7 @@ if ($publicDnsName -ne "") {
 "full address:s:${publicDnsName}:3389
 prompt for credentials:i:1
 username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
+sqlcmd -d $DatabaseName -Q "update [dbo].[Object] SET [Modified] = 0"
 }
 ' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
@@ -47,25 +79,46 @@ $clientUserSettings.Save("$destFolder\ClientUserSettings.config")
 ') | Add-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 Log "Running $imageName"
-$containerId = docker run --env      accept_eula=Y `
-                          --hostname $containerName `
-                          --env      PublicDnsName=$publicdnsName `
-                          --name     $containerName `
-                          --publish  80:8080 `
-                          --publish  443:443 `
-                          --publish  7046-7049:7046-7049 `
-                          --env      publicFileSharePort=80 `
-                          --env      username="$navAdminUsername" `
-                          --env      password="$adminPassword" `
-                          --env      useSSL=Y `
-                          --env      locale=$locale `
-                          --volume   c:\demo:c:\demo `
-                          --volume   c:\myfolder:c:\run\my `
-                          --volume   "C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles" `
-                          --restart  always `
-                          --detach `
-                          $imageName
-
+if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
+    $containerId = docker run --env      accept_eula=Y `
+                              --hostname $containerName `
+                              --env      PublicDnsName=$publicdnsName `
+                              --name     $containerName `
+                              --publish  80:8080 `
+                              --publish  443:443 `
+                              --publish  7046-7049:7046-7049 `
+                              --env      publicFileSharePort=80 `
+                              --env      username="$navAdminUsername" `
+                              --env      password="$adminPassword" `
+                              --env      useSSL=Y `
+                              --env      locale=$locale `
+                              --env      licenseFile="c:\demo\license.flf" `
+                              --volume   c:\demo:c:\demo `
+                              --volume   c:\myfolder:c:\run\my `
+                              --volume   "C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles" `
+                              --restart  always `
+                              --detach `
+                              $imageName
+} else {
+    $containerId = docker run --env      accept_eula=Y `
+                              --hostname $containerName `
+                              --env      PublicDnsName=$publicdnsName `
+                              --name     $containerName `
+                              --publish  80:8080 `
+                              --publish  443:443 `
+                              --publish  7046-7049:7046-7049 `
+                              --env      publicFileSharePort=80 `
+                              --env      username="$navAdminUsername" `
+                              --env      password="$adminPassword" `
+                              --env      useSSL=Y `
+                              --env      locale=$locale `
+                              --volume   c:\demo:c:\demo `
+                              --volume   c:\myfolder:c:\run\my `
+                              --volume   "C:\Program Files (x86)\Microsoft Dynamics NAV:C:\navpfiles" `
+                              --restart  always `
+                              --detach `
+                              $imageName
+}
 if ($LastExitCode -ne 0) {
     throw "Docker run error"
 }
@@ -94,12 +147,6 @@ if ($certFileName) {
     $store.open("MaxAllowed") 
     $store.add($pfx) 
     $store.close()
-}
-
-if (Test-Path -Path 'c:\demo\license.flf' -PathType Leaf) {
-    Log "Importing license file"
-    docker exec -it $containerName powershell "Import-Module 'C:\Program Files\Microsoft Dynamics NAV\*\Service\Microsoft.Dynamics.Nav.Management.psm1'
-Import-NAVServerLicense -LicenseFile 'c:\demo\license.flf' -ServerInstance 'NAV' -Database NavDatabase -WarningAction SilentlyContinue"
 }
 
 Log "Waiting for container to become ready, this will only take a few minutes"

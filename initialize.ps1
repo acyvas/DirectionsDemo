@@ -6,7 +6,7 @@ param
        [string]$vmAdminUsername        = "vmadmin",
        [string]$navAdminUsername       = "admin",
        [string]$adminPassword          = "P@ssword1",
-       [string]$country                = "us",
+       [string]$country                = "finus",
        [string]$navVersion             = "devpreview",
        [string]$licenseFileUri         = "",
        [string]$certificatePfxUrl      = "",
@@ -46,11 +46,11 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Log -color Green "Starting initialization"
 Log("TemplateLink: $templateLink")
 
-Log("Upgrading Docker Engine")
-Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
-Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
-Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
-Start-Service docker
+#Log("Upgrading Docker Engine")
+#Unregister-PackageSource -ProviderName DockerMsftProvider -Name DockerDefault -Erroraction Ignore
+#Register-PackageSource -ProviderName DockerMsftProvider -Name Docker -Erroraction Ignore -Location https://download.docker.com/components/engine/windows-server/index.json
+#Install-Package -Name docker -ProviderName DockerMsftProvider -Update -Force
+#Start-Service docker
 
 # Turn off IE Enhanced Security Configuration
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" -Name "IsInstalled" -Value 0 | Out-Null
@@ -60,22 +60,37 @@ $registry = "navdocker.azurecr.io"
 Log("Logging in to $registry")
 docker login $registry -u "7cc3c660-fc3d-41c6-b7dd-dd260148fff7" -p "G/7gwmfohn5bacdf4ooPUjpDOwHIxXspLIFrUsGN+sU="
 
-Log "pulling microsoft/windowsservercore"
-docker pull microsoft/windowsservercore
-
 $country = $country.ToLowerInvariant()
 $imageName = ""
 $navVersion.Split(',') | % {
     $pullImage = "$registry/dynamics-nav:$_"
     if ($imageName -eq "") {
         if ($country -ne "w1") {
-            $pullImage += "-fin$country"
+            $pullImage += "-$country"
         }
         $imageName = $pullImage
     }
     
-    Log "pulling $pullImage"
-    docker pull $pullImage
+    $pulled = $false
+    1..3 | % {
+        if (!$pulled) {
+            try {
+                Log "pulling $pullImage"
+                docker pull $pullImage
+                if ($LastExitCode -eq 0) {
+                    $pulled = $true
+                }
+            } catch {
+            }
+            if (!$pulled) {
+                Start-Sleep -Seconds 120
+            }
+        }
+    }
+    if (!$pulled) {
+        Log "pulling $pullImage"
+        docker pull $pullImage
+    }
 }
 
 $settingsScript = "c:\demo\settings.ps1"
@@ -85,6 +100,14 @@ $setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
 
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
+
+if ($vmAdminUsername -ne $navAdminUsername) {
+    '. "c:\run\SetupWindowsUsers.ps1"
+    Write-Host "Creating Host Windows user"
+    $hostUsername = "'+$vmAdminUsername+'"
+    New-LocalUser -AccountNeverExpires -FullName $hostUsername -Name $hostUsername -Password (ConvertTo-SecureString -AsPlainText -String $password -Force) -ErrorAction Ignore | Out-Null
+    Add-LocalGroupMember -Group administrators -Member $hostUsername -ErrorAction Ignore' | Set-Content "c:\myfolder\SetupWindowsUsers.ps1"
+}
 
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"          -destinationFile "c:\demo\http\Default.aspx"
