@@ -101,6 +101,14 @@ $setupNavContainerScript = "c:\demo\SetupNavContainer.ps1"
 $scriptPath = $templateLink.SubString(0,$templateLink.LastIndexOf('/')+1)
 DownloadFile -sourceUrl "${scriptPath}SetupNavUsers.ps1" -destinationFile "c:\myfolder\SetupNavUsers.ps1"
 
+if ($vmAdminUsername -ne $navAdminUsername) {
+    '. "c:\run\SetupWindowsUsers.ps1"
+    Write-Host "Creating Host Windows user"
+    $hostUsername = "'+$vmAdminUsername+'"
+    New-LocalUser -AccountNeverExpires -FullName $hostUsername -Name $hostUsername -Password (ConvertTo-SecureString -AsPlainText -String $password -Force) -ErrorAction Ignore | Out-Null
+    Add-LocalGroupMember -Group administrators -Member $hostUsername -ErrorAction Ignore' | Set-Content "c:\myfolder\SetupWindowsUsers.ps1"
+}
+
 New-Item -Path "C:\DEMO\http" -ItemType Directory
 DownloadFile -sourceUrl "${scriptPath}Default.aspx"          -destinationFile "c:\demo\http\Default.aspx"
 DownloadFile -sourceUrl "${scriptPath}status.aspx"           -destinationFile "c:\demo\http\status.aspx"
