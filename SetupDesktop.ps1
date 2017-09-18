@@ -113,13 +113,11 @@ if ($winClientFolder) {
     [xml]$customConfig = docker exec $containerName powershell $ps
     $databaseInstance = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseInstance']").Value
     $databaseName = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseName']").Value
-    $CredentialType = $customConfig.SelectSingleNode("//appSettings/add[@key='ClientServicesCredentialType']").Value
-    if ($CredentialType -eq "Windows") { $ntauth = "yes" } else { $ntauth = "no" }
     $databaseServer = "$containerName"
     if ($databaseInstance) { $databaseServer += "\$databaseInstance" }
 
     New-DesktopShortcut -Name "Windows Client" -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
-    New-DesktopShortcut -Name "FinSql" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=$ntauth, username=sa"
+    New-DesktopShortcut -Name "FinSql" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=yes"
 }
 New-DesktopShortcut -Name "Container Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
 New-DesktopShortcut -Name "Container PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
