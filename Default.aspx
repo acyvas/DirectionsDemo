@@ -36,7 +36,12 @@ private string getCountry()
 {
   if (System.IO.File.Exists(@"c:\demo\country.txt"))
   {
-    return (System.IO.File.ReadAllLines(@"c:\demo\country.txt")[0]).ToUpperInvariant();
+    var ct = (System.IO.File.ReadAllLines(@"c:\demo\country.txt")[0]).ToUpperInvariant();
+    if (ct.StartsWith("FIN")) {
+      return ct.Substring(3);
+    } else {
+      return ct;
+    }
   }
   return "W1";
 }
