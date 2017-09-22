@@ -46,16 +46,19 @@ switch ($country) {
 default { $locale = "en-US" }
 }
 
-# Override AdditionalSetup to copy iguration to not use SSL for Developer Services
+# Override AdditionalSetup
+# - Create landing page
+# - Create Connect.rdp
+# - Clear Modified flag on objects
 '$wwwRootPath = Get-WWWRootPath
 $httpPath = Join-Path $wwwRootPath "http"
 Copy-Item -Path "C:\demo\http\*.*" -Destination $httpPath -Recurse
 if ($publicDnsName -ne "") {
-"full address:s:${publicDnsName}:3389
-prompt for credentials:i:1
-username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
-sqlcmd -d $DatabaseName -Q "update [dbo].[Object] SET [Modified] = 0"
+  "full address:s:${publicDnsName}:3389
+  prompt for credentials:i:1
+  username:s:$vmAdminUsername" | Set-Content "$httpPath\Connect.rdp"
 }
+sqlcmd -d $DatabaseName -Q "update [dbo].[Object] SET [Modified] = 0"
 ' | Set-Content -Path "c:\myfolder\AdditionalSetup.ps1"
 
 
