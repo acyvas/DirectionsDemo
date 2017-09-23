@@ -212,7 +212,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     New-DesktopShortcut -Name "$devContainerName PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName powershell -noexit c:\run\prompt.ps1"
 
     Write-Host -ForegroundColor Green "Developer server container $devContainerName successfully created"
-
+<# rollback cert download
     Log "Copying .vsix and Certificate to C:\Demo"
     Remove-Item "C:\Demo\*.vsix" -Force
     Remove-Item "C:\Demo\*.cer" -Force
@@ -230,7 +230,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
         $store.add($pfx) 
         $store.close()
 }
-
+#>
 
 }
 
