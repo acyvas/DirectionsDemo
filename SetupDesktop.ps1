@@ -48,7 +48,7 @@ function GetNavContainerCountry($containerName) {
 
 function WaitNavContainerReady($containerName) {
     Write-Host "Waiting for container $containerName to be ready, this shouldn't take more than a few minutes"
-    Write-Host "Time:          Â½              1              Â½              2"
+    Write-Host "Time:          ½              1              ½              2"
     $cnt = 150
     $log = ""
     do {
@@ -352,7 +352,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
 
 # Do not open Server Manager At Logon
-New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" â€“Force | Out-Null
+New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force | Out-Null
 
 $Folder = "C:\DOWNLOAD\VSCode"
 $Filename = "$Folder\VSCodeSetup-stable.exe"
@@ -362,7 +362,7 @@ if (!(Test-Path $Filename)) {
 }
 
 Log "Installing Visual Studio Code"
-$setupParameters = â€œ/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
+$setupParameters = “/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
 Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
 
 Log "Download samples"
@@ -454,7 +454,7 @@ if ($style -eq "workshop") {
 
 #>>1CF
 $BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
-. C:\demo\HelperFunctions.ps1
+
 $Folder = "C:\DOWNLOAD\Backups"
 $Filename = "$Folder\dbBackups.zip"
 New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
@@ -489,7 +489,7 @@ Get-ChildItem $Folder -Filter *.bak |%{
         }
         
         Log "Installing Visual Studio 2017 Enterprise"
-        $setupParameters = â€œ--quiet --norestart"
+        $setupParameters = “--quiet --norestart"
         Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
         
         Start-Sleep -Seconds 10
