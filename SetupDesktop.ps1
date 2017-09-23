@@ -174,7 +174,6 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
                  --hostname $devContainerName `
                  --env accept_eula=Y `
                  --env useSSL=N `
-                 --env auth=Windows `
                  --env username=$vmAdminUsername `
                  --env password=$adminPassword `
                  --env ExitOnError=N `
