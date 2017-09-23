@@ -212,7 +212,29 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     New-DesktopShortcut -Name "$devContainerName PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName powershell -noexit c:\run\prompt.ps1"
 
     Write-Host -ForegroundColor Green "Developer server container $devContainerName successfully created"
+
+    Log "Copying .vsix and Certificate to C:\Demo"
+    Remove-Item "C:\Demo\*.vsix" -Force
+    Remove-Item "C:\Demo\*.cer" -Force
+    docker exec -it $devImageName powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Run\My' -force
+      copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Run\My' -force"
+    $certFileName = (Get-Item "C:\Demo\$devImageName*.cer").FullName
+
+    # Install Certificate on host
+    if ($certFileName) {
+        Log "Importing $certFileName to trusted root"
+        $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 
+        $pfx.import($certFileName)
+        $store = new-object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root,"localmachine")
+        $store.open("MaxAllowed") 
+        $store.add($pfx) 
+        $store.close()
 }
+
+
+}
+
+
 
 function GetLocaleFromCountry($country) {
     switch ($country) {
@@ -444,10 +466,10 @@ if (!(Test-Path $Filename)) {
 [System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
 
 Get-ChildItem $Folder -Filter *.bak |%{
-$devDocker= $_.BaseName
-$bakupPath = $_.FullName
+    $devDocker= $_.BaseName
+    $bakupPath = $_.FullName
 
-CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
+    CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
 }
 
 #<<1CF
