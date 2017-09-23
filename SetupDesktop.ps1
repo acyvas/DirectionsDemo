@@ -174,12 +174,17 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
                  --hostname $devContainerName `
                  --env accept_eula=Y `
                  --env useSSL=N `
+                 --env auth=Windows `
                  --env username=$vmAdminUsername `
                  --env password=$adminPassword `
                  --env ExitOnError=N `
                  --env locale=$locale `
                  --env licenseFile="$licenseFile" `
                  --env bakfile="C:\Run\my\${dbBackupFileName}" `
+                 --publish  80:8080 `
+                 --publish  443:443 `
+                 --publish  7046-7049:7046-7049 `
+                 --env      publicFileSharePort=80 `
                  --volume C:\DEMO:C:\DEMO `
                  --volume "${myFolder}:C:\Run\my" `
                  --volume "${programFilesFolder}:C:\navpfiles" `
