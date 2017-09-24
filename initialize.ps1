@@ -169,7 +169,7 @@ $containerName = "navserver"
 ('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
-. $setupNavContainerScript
+#1CF . $setupNavContainerScript
 
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
@@ -178,7 +178,7 @@ Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Trigger $logonTrigger `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
-
+<#1CF
 if ($style -eq "workshop") {
     $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
     $startupTrigger = New-ScheduledTaskTrigger -AtStartup
@@ -188,3 +188,4 @@ if ($style -eq "workshop") {
                            -RunLevel Highest `
                            -User System | Out-Null
 }
+#>
