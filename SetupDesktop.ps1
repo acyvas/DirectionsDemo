@@ -167,7 +167,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
         write-host "Copying file $dbBackup to $myFolder"
         $dbBackupFileName = Split-Path $dbBackup -Leaf
         Copy-Item -Path $dbBackup -Destination "$myFolder\" -Recurse -Force 
-    }
+    
     Write-Host "Running Conainer Image $devImageName"
     $id = docker run `
                  --name $devContainerName `
@@ -181,16 +181,32 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
                  --env locale=$locale `
                  --env licenseFile="$licenseFile" `
                  --env bakfile="C:\Run\my\${dbBackupFileName}" `
-                 --publish  80:8080 `
-                 --publish  443:443 `
-                 --publish  7046-7049:7046-7049 `
-                 --env      publicFileSharePort=80 `
                  --volume C:\DEMO:C:\DEMO `
                  --volume "${myFolder}:C:\Run\my" `
                  --volume "${programFilesFolder}:C:\navpfiles" `
                  --restart always `
                  --detach `
                  $devImageName
+    }else{
+    $id = docker run `
+                 --name $devContainerName `
+                 --hostname $devContainerName `
+                 --env accept_eula=Y `
+                 --env useSSL=N `
+                 --env auth=Windows `
+                 --env username=$vmAdminUsername `
+                 --env password=$adminPassword `
+                 --env ExitOnError=N `
+                 --env locale=$locale `
+                 --env licenseFile="$licenseFile" `
+                 --volume C:\DEMO:C:\DEMO `
+                 --volume "${myFolder}:C:\Run\my" `
+                 --volume "${programFilesFolder}:C:\navpfiles" `
+                 --restart always `
+                 --detach `
+                 $devImageName
+    }
+
 
     WaitNavContainerReady $devContainerName
 
@@ -212,25 +228,6 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     New-DesktopShortcut -Name "$devContainerName PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName powershell -noexit c:\run\prompt.ps1"
 
     Write-Host -ForegroundColor Green "Developer server container $devContainerName successfully created"
-<# rollback cert download
-    Log "Copying .vsix and Certificate to C:\Demo"
-    Remove-Item "C:\Demo\*.vsix" -Force
-    Remove-Item "C:\Demo\*.cer" -Force
-    docker exec -it $devImageName powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Run\My' -force
-      copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Run\My' -force"
-    $certFileName = (Get-Item "C:\Demo\$devImageName*.cer").FullName
-
-    # Install Certificate on host
-    if ($certFileName) {
-        Log "Importing $certFileName to trusted root"
-        $pfx = new-object System.Security.Cryptography.X509Certificates.X509Certificate2 
-        $pfx.import($certFileName)
-        $store = new-object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root,"localmachine")
-        $store.open("MaxAllowed") 
-        $store.add($pfx) 
-        $store.close()
-}
-#>
 
 }
 
@@ -465,12 +462,24 @@ if (!(Test-Path $Filename)) {
 [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
 [System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
 
+$ServersToCreate = Import-Csv "$Folder\servers.csv"
+
+$ServersToCreate |%{
+    $d = $_.Server
+    $bakupPath = "$Folder\$($_.Backup)"
+    CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
+}
+
+<# 1CF Evil Basename
 Get-ChildItem $Folder -Filter *.bak |%{
     $devDocker= $_.BaseName
     $bakupPath = $_.FullName
 
     CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
 }
+#>
+
+
 
 #<<1CF
 
