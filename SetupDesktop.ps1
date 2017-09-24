@@ -138,11 +138,11 @@ if (!(Test-Path $Filename)) {
 #$ServersToCreate = Import-Csv "$Folder\servers.csv"
 $s1= "NAV_Demo1"
 $b1= "C:\DOWNLOAD\Backups\NAV_Demo1.bak"
-CreateDevServerContainer -devContainerName $s1 -dbBackup $b1
+CreateDevServerContainer -devContainerName NAV_Demo1 -dbBackup C:\DOWNLOAD\Backups\NAV_Demo1.bak
 
 $s2= "NAV_Demo2"
 $b2= "C:\DOWNLOAD\Backups\NAV_Demo2.bak"
-CreateDevServerContainer -devContainerName $s2 -dbBackup $b2
+CreateDevServerContainer -devContainerName NAV_Demo2 -dbBackup C:\DOWNLOAD\Backups\NAV_Demo2.bak
 
 
 <#
