@@ -121,10 +121,6 @@ AC#>
 #AC New-DesktopShortcut -Name "PowerShell ISE" -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\powershell_ise.exe" -WorkingDirectory "c:\demo"
 #AC New-DesktopShortcut -Name "Command Prompt" -TargetPath "C:\Windows\system32\cmd.exe" -WorkingDirectory "c:\demo"
 
-if ($style -eq "workshop") {
-    Log "Patching landing page"
-    $s = [System.IO.File]::ReadAllText("C:\DEMO\http\Default.aspx")
-    [System.IO.File]::WriteAllText("C:\DEMO\http\Default.aspx", $s.Replace('Microsoft Dynamics NAV \"Tenerife\" Developer Preview','Directions 2017 Workshop VM'))
 
 #>>1CF
 $BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
@@ -140,13 +136,13 @@ if (!(Test-Path $Filename)) {
 [System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
 
 #$ServersToCreate = Import-Csv "$Folder\servers.csv"
-$s= "NAV_Demo1"
-$b= "C:\DOWNLOAD\Backups\NAV_Demo1.bak"
-CreateDevServerContainer -devContainerName $s -dbBackup $b
+$s1= "NAV_Demo1"
+$b1= "C:\DOWNLOAD\Backups\NAV_Demo1.bak"
+CreateDevServerContainer -devContainerName $s1 -dbBackup $b1
 
-$s= "NAV_Demo2"
-$b= "C:\DOWNLOAD\Backups\NAV_Demo2.bak"
-CreateDevServerContainer -devContainerName $s -dbBackup $b
+$s2= "NAV_Demo2"
+$b2= "C:\DOWNLOAD\Backups\NAV_Demo2.bak"
+CreateDevServerContainer -devContainerName $s2 -dbBackup $b2
 
 
 <#
@@ -192,7 +188,6 @@ Get-ChildItem $Folder -Filter *.bak |%{
         Log -color Red -line ($Error[0].ToString() + " (" + ($Error[0].ScriptStackTrace -split '\r\n')[0] + ")")
     }
    AC#>
-}
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
