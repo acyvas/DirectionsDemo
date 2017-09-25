@@ -207,7 +207,7 @@ $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
 
 Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Action $logonAction `
-                       -Trigger $startupTrigger `
+                       -Trigger $logonTrigger `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
 
