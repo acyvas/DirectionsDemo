@@ -117,6 +117,10 @@ DownloadFile -sourceUrl "${scriptPath}Microsoft.png"         -destinationFile "c
 DownloadFile -sourceUrl "${scriptPath}SetupDesktop.ps1"      -destinationFile $setupDesktopScript
 DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $setupNavContainerScript
 
+#>>1CF download Helper functions
+DownloadFile -sourceUrl "${scriptPath}HelperFunctions.ps1" -destinationFile C:\DEMO\HelperFunctions.ps1
+#<<1CF
+
 if ($style -eq "workshop") {
     DownloadFile -sourceUrl "${scriptPath}SetupVm.ps1"           -destinationFile $setupVmScript
 }
@@ -170,16 +174,12 @@ $containerName = "navserver"
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
 #1CF . $setupNavContainerScript
-#>>1CF helper functions
-$helperurl = "https://www.dropbox.com/s/h9tksgc68qcacvw/HelperFunctions.ps1?dl=1"
-DownloadFile -SourceUrl $helperurl  -destinationFile C:\DEMO\HelperFunctions.ps1
-Import-Module C:\DEMO\HelperFunctions.ps1
-#<<1CF Helper functions
 
 
 #>>1CF
-$BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
+Import-Module C:\DEMO\HelperFunctions.ps1
 
+$BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
 $Folder = "C:\DOWNLOAD\Backups"
 $Filename = "$Folder\dbBackups.zip"
 New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
@@ -190,13 +190,12 @@ if (!(Test-Path $Filename)) {
 [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
 [System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
 
-Get-ChildItem $Folder -Filter *.bak |%{
-    $devDocker= $_.BaseName
-    $bakupPath = $_.FullName
-
-    CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
+$ServersToCreate = Import-Csv "$Folder\servers.csv"
+$ServersToCreate |%{
+    $d = $_.Server
+    $bakupPath = "$Folder\$($_.Backup)"
+    CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
 }
-
 #<<1CF
 
 
@@ -204,12 +203,14 @@ Get-ChildItem $Folder -Filter *.bak |%{
 
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
+<#
 Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Action $logonAction `
-                       -Trigger $logonTrigger `
+                       -Trigger $startupTrigger `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
-<#1CF
+#>
+
 if ($style -eq "workshop") {
     $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
     $startupTrigger = New-ScheduledTaskTrigger -AtStartup
@@ -219,4 +220,3 @@ if ($style -eq "workshop") {
                            -RunLevel Highest `
                            -User System | Out-Null
 }
-#>
