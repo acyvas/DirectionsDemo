@@ -119,6 +119,7 @@ DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $s
 
 #>>1CF download Helper functions
 DownloadFile -sourceUrl "${scriptPath}HelperFunctions.ps1" -destinationFile C:\DEMO\HelperFunctions.ps1
+DownloadFile -sourceUrl "${scriptPath}Servers.csv" -destinationFile C:\DEMO\Servers.csv
 #<<1CF
 
 if ($style -eq "workshop") {
@@ -190,7 +191,7 @@ if (!(Test-Path $Filename)) {
 [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
 [System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
 
-$ServersToCreate = Import-Csv "$Folder\servers.csv"
+$ServersToCreate = Import-Csv "c:\demo\servers.csv"
 $ServersToCreate |%{
     $d = $_.Server
     $bakupPath = "$Folder\$($_.Backup)"
