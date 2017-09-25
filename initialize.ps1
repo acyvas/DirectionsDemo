@@ -204,13 +204,13 @@ $ServersToCreate |%{
 
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
-<#
+
 Register-ScheduledTask -TaskName "SetupDesktop" `
                        -Action $logonAction `
                        -Trigger $startupTrigger `
                        -RunLevel Highest `
                        -User $vmAdminUsername | Out-Null
-#>
+
 
 if ($style -eq "workshop") {
     $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupVmScript
