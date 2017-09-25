@@ -198,6 +198,9 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
 
     WaitNavContainerReady $devContainerName
 
+    docker exec -it $devContainerName powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Run\My' -force 
+    copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Run\My' -force"
+
     Write-Host "Create Desktop Shortcuts for $devContainerName"
     $winClientFolder = (Get-Item "$programFilesFolder\*\RoleTailored Client").FullName
     

@@ -8,6 +8,29 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
+
+function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$WorkingDirectory = "", [string]$IconLocation = "", [string]$Arguments = "")
+{
+    $filename = "C:\Users\Public\Desktop\$Name.lnk"
+    if (Test-Path -Path $filename) {
+        Remove-Item $filename -force
+    }
+
+    $Shell =  New-object -comobject WScript.Shell
+    $Shortcut = $Shell.CreateShortcut($filename)
+    $Shortcut.TargetPath = $TargetPath
+    if (!$WorkingDirectory) {
+        $WorkingDirectory = Split-Path $TargetPath
+    }
+    $Shortcut.WorkingDirectory = $WorkingDirectory
+    if ($Arguments) {
+        $Shortcut.Arguments = $Arguments
+    }
+    if ($IconLocation) {
+        $Shortcut.IconLocation = $IconLocation
+    }
+    $Shortcut.save()
+}
 <#>>1CF helper functions
 $helperurl = "https://www.dropbox.com/s/h9tksgc68qcacvw/HelperFunctions.ps1?dl=1"
 DownloadFile -SourceUrl $helperurl  -destinationFile C:\DEMO\HelperFunctions.ps1
