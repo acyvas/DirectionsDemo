@@ -174,7 +174,7 @@ $containerName = "navserver"
 ('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
-#1CF . $setupNavContainerScript
+. $setupNavContainerScript
 
 
 #>>1CF
