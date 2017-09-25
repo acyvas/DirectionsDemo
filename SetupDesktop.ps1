@@ -8,11 +8,11 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
-#>>1CF helper functions
+<#>>1CF helper functions
 $helperurl = "https://www.dropbox.com/s/h9tksgc68qcacvw/HelperFunctions.ps1?dl=1"
 DownloadFile -SourceUrl $helperurl  -destinationFile C:\DEMO\HelperFunctions.ps1
 Import-Module C:\DEMO\HelperFunctions.ps1
-#<<1CF Helper functions
+#<<1CF Helper functions #>
 
 
 Log -color Green "Setting up Desktop Experience"
@@ -121,8 +121,8 @@ AC#>
 #AC New-DesktopShortcut -Name "PowerShell ISE" -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\powershell_ise.exe" -WorkingDirectory "c:\demo"
 #AC New-DesktopShortcut -Name "Command Prompt" -TargetPath "C:\Windows\system32\cmd.exe" -WorkingDirectory "c:\demo"
 
-
-#>>1CF
+<#
+>>1CF
 $BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
 
 $Folder = "C:\DOWNLOAD\Backups"
@@ -143,7 +143,7 @@ CreateDevServerContainer -devContainerName $s1 -dbBackup C:\DOWNLOAD\Backups\NAV
 $s2= "navdemo2"
 $b2= "C:\DOWNLOAD\Backups\NAV_Demo2.bak"
 CreateDevServerContainer -devContainerName $s2 -dbBackup C:\DOWNLOAD\Backups\NAV_Demo2.bak
-
+#>
 
 <#
 $ServersToCreate |%{

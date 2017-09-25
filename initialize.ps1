@@ -170,6 +170,37 @@ $containerName = "navserver"
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
 #1CF . $setupNavContainerScript
+#>>1CF helper functions
+$helperurl = "https://www.dropbox.com/s/h9tksgc68qcacvw/HelperFunctions.ps1?dl=1"
+DownloadFile -SourceUrl $helperurl  -destinationFile C:\DEMO\HelperFunctions.ps1
+Import-Module C:\DEMO\HelperFunctions.ps1
+#<<1CF Helper functions
+
+
+#>>1CF
+$BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
+
+$Folder = "C:\DOWNLOAD\Backups"
+$Filename = "$Folder\dbBackups.zip"
+New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
+if (!(Test-Path $Filename)) {
+    DownloadFile -SourceUrl $BackupsUrl  -destinationFile $Filename
+}
+
+[Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
+[System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
+
+Get-ChildItem $Folder -Filter *.bak |%{
+    $devDocker= $_.BaseName
+    $bakupPath = $_.FullName
+
+    CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
+}
+
+#<<1CF
+
+
+
 
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
