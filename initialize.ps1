@@ -196,7 +196,10 @@ $ServersToCreate |%{
     $d = $_.Server
     $bakupPath = "$Folder\$($_.Backup)"
     CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
+    Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore
 }
+
+
 #<<1CF
 
 
