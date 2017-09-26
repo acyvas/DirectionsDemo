@@ -174,7 +174,7 @@ $containerName = "navserver"
 ('$vmAdminUsername = "' + $vmAdminUsername + '"')     | Add-Content $settingsScript
 ('$adminPassword = "' + $adminPassword + '"')         | Add-Content $settingsScript
 
-. $setupNavContainerScript
+#. $setupNavContainerScript
 
 
 #>>1CF
@@ -195,15 +195,13 @@ $ServersToCreate = Import-Csv "c:\demo\servers.csv"
 $ServersToCreate |%{
     $d = $_.Server
     $bakupPath = "$Folder\$($_.Backup)"
+    Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
     CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
     Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore
 }
 
 
 #<<1CF
-
-
-
 
 $logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $setupDesktopScript
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn
