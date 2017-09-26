@@ -31,12 +31,6 @@ function New-DesktopShortcut([string]$Name, [string]$TargetPath, [string]$Workin
     }
     $Shortcut.save()
 }
-<#>>1CF helper functions
-$helperurl = "https://www.dropbox.com/s/h9tksgc68qcacvw/HelperFunctions.ps1?dl=1"
-DownloadFile -SourceUrl $helperurl  -destinationFile C:\DEMO\HelperFunctions.ps1
-Import-Module C:\DEMO\HelperFunctions.ps1
-#<<1CF Helper functions #>
-
 
 Log -color Green "Setting up Desktop Experience"
 
@@ -110,84 +104,7 @@ $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
 (New-Object System.Net.WebClient).DownloadFile($sqlncliUrl, $sqlncliFile)
 Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
 
-<#AC
-$winClientFolder = (Get-Item "C:\Program Files (x86)\Microsoft Dynamics NAV\*\RoleTailored Client").FullName
-if ($winClientFolder) {
-
-    Log "Installing Visual C++ Redist"
-    $vcRedistUrl = "https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x86.exe"
-    $vcRedistFile = "C:\DOWNLOAD\vcredist_x86.exe"
-    (New-Object System.Net.WebClient).DownloadFile($vcRedistUrl, $vcRedistFile)
-    Start-Process $vcRedistFile -argumentList "/q" -wait
-    
-    Log "Installing SQL Native Client"
-    $sqlncliUrl = "https://download.microsoft.com/download/3/A/6/3A632674-A016-4E31-A675-94BE390EA739/ENU/x64/sqlncli.msi"
-    $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
-    (New-Object System.Net.WebClient).DownloadFile($sqlncliUrl, $sqlncliFile)
-    Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
-
-    Log "Creating Windows Client configuration file"
-    $ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
-    [System.IO.File]::ReadAllText($customConfigFile)'
-    [xml]$customConfig = docker exec $containerName powershell $ps
-    $databaseInstance = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseInstance']").Value
-    $databaseName = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseName']").Value
-    $databaseServer = "$containerName"
-    if ($databaseInstance) { $databaseServer += "\$databaseInstance" }
-
-    New-DesktopShortcut -Name "Windows Client" -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
-    New-DesktopShortcut -Name "FinSql" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=yes"
-}
-AC#>
-#AC New-DesktopShortcut -Name "Container Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName cmd"
-#AC New-DesktopShortcut -Name "Container PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $containerName powershell -noexit c:\run\prompt.ps1"
-#AC New-DesktopShortcut -Name "PowerShell ISE" -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\powershell_ise.exe" -WorkingDirectory "c:\demo"
-#AC New-DesktopShortcut -Name "Command Prompt" -TargetPath "C:\Windows\system32\cmd.exe" -WorkingDirectory "c:\demo"
-
-<#
->>1CF
-$BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
-
-$Folder = "C:\DOWNLOAD\Backups"
-$Filename = "$Folder\dbBackups.zip"
-New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
-if (!(Test-Path $Filename)) {
-    DownloadFile -SourceUrl $BackupsUrl  -destinationFile $Filename
-}
-
-[Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
-[System.IO.Compression.ZipFile]::ExtractToDirectory($Filename,$Folder )
-
-#$ServersToCreate = Import-Csv "$Folder\servers.csv"
-$s1= "navdemo1"
-$b1= "C:\DOWNLOAD\Backups\NAV_Demo1.bak"
-CreateDevServerContainer -devContainerName $s1 -dbBackup C:\DOWNLOAD\Backups\NAV_Demo1.bak
-
-$s2= "navdemo2"
-$b2= "C:\DOWNLOAD\Backups\NAV_Demo2.bak"
-CreateDevServerContainer -devContainerName $s2 -dbBackup C:\DOWNLOAD\Backups\NAV_Demo2.bak
-#>
-
-<#
-$ServersToCreate |%{
-    $d = $_.Server
-    $bakupPath = "$Folder\$($_.Backup)"
-    CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
-}
-#>
-<# 1CF Evil Basename
-Get-ChildItem $Folder -Filter *.bak |%{
-    $devDocker= $_.BaseName
-    $bakupPath = $_.FullName
-
-    CreateDevServerContainer -devContainerName $devDocker -dbBackup $bakupPath
-}
-#>
-
-
-
 #<<1CF
-
 
 #AC    docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
 <#AC
