@@ -217,6 +217,15 @@ Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 
+#>>1CF Cleanup
+Remove-Item "C:\DOWNLOAD" -Recurse -Force -ErrorAction Ignore 
+Remove-Item "C:\DEMO\http" -Recurse -Force -ErrorAction Ignore
+Get-ChildItem "C:\DEMO\*.ps1" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
+Get-ChildItem "C:\DEMO\*.csv" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
+Get-ChildItem "C:\DEMO\*.zip" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
+Get-ChildItem "C:\DEMO\*.txt" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
+Get-ChildItem "C:\DEMO\*.bak" -Recurse -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore#<<1CF Cleanup
+
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
     schtasks /DELETE /TN setupDesktop /F | Out-Null
