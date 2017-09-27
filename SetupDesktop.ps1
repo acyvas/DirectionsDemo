@@ -107,7 +107,7 @@ Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile A
 #<<1CF
 
 #AC    docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
-<#AC
+
     try {
         $Folder = "C:\DOWNLOAD\VisualStudio2017Enterprise"
         $Filename = "$Folder\vs_enterprise.exe"
@@ -127,7 +127,7 @@ Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile A
     } catch {
         Log -color Red -line ($Error[0].ToString() + " (" + ($Error[0].ScriptStackTrace -split '\r\n')[0] + ")")
     }
-   AC#>
+
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
