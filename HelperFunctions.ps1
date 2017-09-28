@@ -215,7 +215,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     New-DesktopShortcut -Name "$devContainerName Web Client" -TargetPath "http://${devContainerName}/NAV/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "$devContainerName Windows Client" -TargetPath "$WinClientFolder\Microsoft.Dynamics.Nav.Client.exe"
     New-DesktopShortcut -Name "$devContainerName CSIDE" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=yes"
-    New-DesktopShortcut -Name "$devContainerName Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName cmd"
+#    New-DesktopShortcut -Name "$devContainerName Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName cmd"
     New-DesktopShortcut -Name "$devContainerName PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName powershell -noexit c:\run\prompt.ps1"
 
     Write-Host -ForegroundColor Green "Developer server container $devContainerName successfully created"
