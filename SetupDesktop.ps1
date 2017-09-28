@@ -104,10 +104,18 @@ $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
 (New-Object System.Net.WebClient).DownloadFile($sqlncliUrl, $sqlncliFile)
 Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
 
+#1CF Setup report builder
+Log "Installing SQL Report Builder"
+$sqlrepbuilderURL= "https://download.microsoft.com/download/2/E/1/2E1C4993-7B72-46A4-93FF-3C3DFBB2CEE0/ENU/x86/ReportBuilder3.msi"
+$sqlrepbuilderPath = "c:\download\ReportBuilder3.msi"
+
+(New-Object System.Net.WebClient).DownloadFile($sqlrepbuilderURL, $sqlrepbuilderPath)
+Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlrepbuilderPath /quiet" -wait
+
 #<<1CF
 
 #AC    docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
-
+<#1CF
     try {
         $Folder = "C:\DOWNLOAD\VisualStudio2017Enterprise"
         $Filename = "$Folder\vs_enterprise.exe"
@@ -128,7 +136,7 @@ Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile A
         Log -color Red -line ($Error[0].ToString() + " (" + ($Error[0].ScriptStackTrace -split '\r\n')[0] + ")")
     }
 
-
+#>
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
