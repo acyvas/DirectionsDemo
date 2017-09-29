@@ -105,6 +105,9 @@ $sqlncliFile = "C:\DOWNLOAD\sqlncli.msi"
 Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlncliFile ADDLOCAL=ALL IACCEPTSQLNCLILICENSETERMS=YES /qn" -wait
 
 #1CF Setup report builder
+Log "Installing .NET"
+Install-WindowsFeature Net-Framework-Core 
+
 Log "Installing SQL Report Builder"
 $sqlrepbuilderURL= "https://download.microsoft.com/download/2/E/1/2E1C4993-7B72-46A4-93FF-3C3DFBB2CEE0/ENU/x86/ReportBuilder3.msi"
 $sqlrepbuilderPath = "c:\download\ReportBuilder3.msi"
