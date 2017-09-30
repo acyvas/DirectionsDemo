@@ -241,7 +241,7 @@ if ($style -eq "workshop") {
 }
 
 $startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
-$startupTrigger = New-ScheduledTaskTrigger -Daily -At -
+$startupTrigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "RenewWorkshopAtLogon" `
                         -Action $startupAction `
                         -Trigger $startupTrigger `

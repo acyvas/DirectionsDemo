@@ -202,9 +202,11 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Run\My' -force"
 
     Write-Host "Create Desktop Shortcuts for $devContainerName"
-    $winClientFolder = (Get-Item "$programFilesFolder\*\RoleTailored Client").FullName
+    #$winClientFolder = (Get-Item "$programFilesFolder\*\RoleTailored Client").FullName
+    $winClientFolder = "$programFilesFolder\110\RoleTailored Client"
     
-    $ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
+    #$ps = '$customConfigFile = Join-Path (Get-Item ''C:\Program Files\Microsoft Dynamics NAV\*\Service'').FullName "CustomSettings.config"
+    $ps = '$customConfigFile = Join-Path (''C:\Program Files\Microsoft Dynamics NAV\110\Service'') "CustomSettings.config"
     [System.IO.File]::ReadAllText($customConfigFile)'
     [xml]$customConfig = docker exec $devContainerName powershell $ps
     $databaseInstance = $customConfig.SelectSingleNode("//appSettings/add[@key='DatabaseInstance']").Value

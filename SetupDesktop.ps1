@@ -42,6 +42,15 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet
 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3" -Name "1604" -Value 0
 
+#Disable default security settings in IE
+New-Item "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer"
+new-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\" -Name "DisableFirstRunCustomize" -Value '00000001' -PropertyType DWORD
+
+New-Item "HKCU:\SOFTWARE\Policies\Microsoft\Internet Explorer"
+New-Item "HKCU:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main"
+
+new-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value '00000001' -PropertyType DWORD
+
 # Do not open Server Manager At Logon
 New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force | Out-Null
 
@@ -71,7 +80,7 @@ $alFolder = "C:\Users\$([Environment]::UserName)\Documents\AL"
 Remove-Item -Path "$alFolder\Samples" -Recurse -Force -ErrorAction Ignore | Out-Null
 New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
 Copy-Item -Path (Join-Path $PSScriptRoot "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
-
+<#1CF not install vsix
 $vsixFileName = (Get-Item "C:\Demo\*.vsix").FullName
 if ($vsixFileName -ne "") {
 
@@ -86,11 +95,12 @@ if ($vsixFileName -ne "") {
         }
     }
 }
-
+1CF#>
 Log "Creating Desktop Shortcuts"
 #AC New-DesktopShortcut -Name "Landing Page" -TargetPath "http://${publicDnsName}" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 New-DesktopShortcut -Name "Visual Studio Code" -TargetPath "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
 #AC New-DesktopShortcut -Name "Web Client" -TargetPath "https://${publicDnsName}/NAV/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "Workshop Files" -TargetPath "C:\WorkshopFiles\" #1CF
 
 Log "Installing Visual C++ Redist"
 $vcRedistUrl = "https://download.microsoft.com/download/2/E/6/2E61CFA4-993B-4DD4-91DA-3737CD5CD6E3/vcredist_x86.exe"
