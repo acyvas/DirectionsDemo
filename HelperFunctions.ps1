@@ -217,6 +217,8 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     New-DesktopShortcut -Name "$devContainerName CSIDE" -TargetPath "$WinClientFolder\finsql.exe" -Arguments "servername=$databaseServer, Database=$databaseName, ntauthentication=yes"
 #    New-DesktopShortcut -Name "$devContainerName Command Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName cmd"
     New-DesktopShortcut -Name "$devContainerName PowerShell Prompt" -TargetPath "CMD.EXE" -IconLocation "C:\Program Files\Docker\docker.exe, 0" -Arguments "/C docker.exe exec -it $devContainerName powershell -noexit c:\run\prompt.ps1"
+    #1CF
+    New-DesktopShortcut -Name "$devContainerName Restart NST" -TargetPath "CMD.EXE" -IconLocation "C:\Windows\System32\shell32.dll, 238" -Arguments "/C docker.exe exec -it $devContainerName powershell c:\run\my\restartnst.ps1"
 
     Write-Host -ForegroundColor Green "Developer server container $devContainerName successfully created"
 }

@@ -120,6 +120,22 @@ DownloadFile -sourceUrl "${scriptPath}SetupNavContainer.ps1" -destinationFile $s
 #>>1CF download Helper functions
 DownloadFile -sourceUrl "${scriptPath}HelperFunctions.ps1" -destinationFile C:\DEMO\HelperFunctions.ps1
 DownloadFile -sourceUrl "${scriptPath}Servers.csv" -destinationFile C:\DEMO\Servers.csv
+DownloadFile -sourceUrl "${scriptPath}RestartNST.ps1" -destinationFile C:\DEMO\RestartNST.ps1
+
+$workshopFilesUrl = 'https://www.dropbox.com/s/4iy5jft3ucgngqa/WorkshopFiles.zip?dl=1'
+
+$downloadWorkshopFilesScript = 'c:\Demo\DownloadWorkshopFiles\DownloadWorkshopFiles.ps1'
+New-Item 'c:\Demo\DownloadWorkshopFiles' -ItemType Directory -ErrorAction Ignore |Out-Null
+('$workshopFilesUrl = "'+$workshopFilesUrl +'"
+$workshopFilesFolder = "c:\WorkshopFiles"
+$workshopFilesFile = "c:\demo\workshopFiles.zip"
+Remove-Item $workshopFilesFolder -Force -Recurse
+New-Item -Path $workshopFilesFolder -ItemType Directory -ErrorAction Ignore
+DownloadFile -sourceUrl $workshopFilesUrl -destinationFile $workshopFilesFile
+[Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
+[System.IO.Compression.ZipFile]::ExtractToDirectory($workshopFilesFile, $workshopFilesFolder)
+')| Add-Content $downloadWorkshopFilesScript |Out-Null
+
 #<<1CF
 
 if ($style -eq "workshop") {
@@ -198,6 +214,7 @@ $ServersToCreate |%{
     Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
     CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
     Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore
+    Copy-Item -Path "C:\DEMO\RestartNST.ps1" -Destination "c:\DEMO\$d\my\RestartNST.ps1" -Force -ErrorAction Ignore
 }
 
 
@@ -222,4 +239,13 @@ if ($style -eq "workshop") {
                            -RunLevel Highest `
                            -User System | Out-Null
 }
+
+$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
+$startupTrigger = New-ScheduledTaskTrigger -Daily -At -
+Register-ScheduledTask -TaskName "RenewWorkshopAtLogon" `
+                        -Action $startupAction `
+                        -Trigger $startupTrigger `
+                        -RunLevel Highest `
+                        -User System | Out-Null
+
 Restart-Computer -Force
