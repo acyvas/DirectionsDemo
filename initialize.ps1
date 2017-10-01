@@ -129,8 +129,8 @@ New-Item 'c:\Demo\DownloadWorkshopFiles' -ItemType Directory -ErrorAction Ignore
 ('$workshopFilesUrl = "'+$workshopFilesUrl +'"
 $workshopFilesFolder = "c:\WorkshopFiles"
 $workshopFilesFile = "c:\demo\workshopFiles.zip"
-Remove-Item $workshopFilesFolder -Force -Recurse
-New-Item -Path $workshopFilesFolder -ItemType Directory -ErrorAction Ignore
+Remove-Item $workshopFilesFolder -Force -Recurse |Out-Null
+New-Item -Path $workshopFilesFolder -ItemType Directory -ErrorAction Ignore |Out-Null
 DownloadFile -sourceUrl $workshopFilesUrl -destinationFile $workshopFilesFile
 [Reflection.Assembly]::LoadWithPartialName("System.IO.Compression.Filesystem") | Out-Null
 [System.IO.Compression.ZipFile]::ExtractToDirectory($workshopFilesFile, $workshopFilesFolder)
@@ -213,6 +213,7 @@ $ServersToCreate |%{
     $bakupPath = "$Folder\$($_.Backup)"
     Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
     CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
+    CreateDevServerContainer -devContainerName $d
     Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore
     Copy-Item -Path "C:\DEMO\RestartNST.ps1" -Destination "c:\DEMO\$d\my\RestartNST.ps1" -Force -ErrorAction Ignore
 }
