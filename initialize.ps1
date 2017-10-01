@@ -126,7 +126,12 @@ $workshopFilesUrl = 'https://www.dropbox.com/s/4iy5jft3ucgngqa/WorkshopFiles.zip
 
 $downloadWorkshopFilesScript = 'c:\Demo\DownloadWorkshopFiles\DownloadWorkshopFiles.ps1'
 New-Item 'c:\Demo\DownloadWorkshopFiles' -ItemType Directory -ErrorAction Ignore |Out-Null
-('$workshopFilesUrl = "'+$workshopFilesUrl +'"
+('function DownloadFile([string]$sourceUrl, [string]$destinationFile)
+{
+    Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
+    (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
+}
+$workshopFilesUrl = "'+$workshopFilesUrl +'"
 $workshopFilesFolder = "c:\WorkshopFiles"
 $workshopFilesFile = "c:\demo\workshopFiles.zip"
 Remove-Item $workshopFilesFolder -Force -Recurse |Out-Null
