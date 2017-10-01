@@ -22,3 +22,13 @@ Register-ScheduledTask -TaskName "SetupDesktop" `
                        -User $vmAdminUsername `
                        -Password $adminPassword | Out-Null
 Start-ScheduledTask -TaskName SetupDesktop
+
+$downloadWorkshopFilesScript = 'c:\Demo\DownloadWorkshopFiles\DownloadWorkshopFiles.ps1'
+$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -TaskName "RenewWorkshopAtLogon" `
+                        -Action $logonAction `
+                        -Trigger $logonTrigger `
+                        -RunLevel Highest `
+                        -User $vmAdminUsername | Out-Null
+

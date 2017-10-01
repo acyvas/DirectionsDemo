@@ -246,12 +246,5 @@ if ($style -eq "workshop") {
                            -User System | Out-Null
 }
 
-$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
-$logonTrigger = New-ScheduledTaskTrigger -AtLogOn
-Register-ScheduledTask -TaskName "RenewWorkshopAtLogon" `
-                        -Action $logonAction `
-                        -Trigger $logonTrigger `
-                        -RunLevel Highest `
-                        -User $vmAdminUsername | Out-Null
 
 Restart-Computer -Force
