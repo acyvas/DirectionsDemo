@@ -240,12 +240,12 @@ if ($style -eq "workshop") {
                            -User System | Out-Null
 }
 
-$startupAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
-$startupTrigger = New-ScheduledTaskTrigger -AtLogOn
+$logonAction = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $downloadWorkshopFilesScript
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "RenewWorkshopAtLogon" `
-                        -Action $startupAction `
-                        -Trigger $startupTrigger `
+                        -Action $logonAction `
+                        -Trigger $logonTrigger `
                         -RunLevel Highest `
-                        -User System | Out-Null
+                        -User $vmAdminUsername | Out-Null
 
 Restart-Computer -Force
