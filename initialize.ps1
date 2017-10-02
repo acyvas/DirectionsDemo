@@ -201,7 +201,7 @@ $containerName = "navserver"
 #>>1CF
 Import-Module C:\DEMO\HelperFunctions.ps1
 
-$BackupsUrl = "https://www.dropbox.com/s/b2mmn9db4fqry2z/DB_Backups.zip?dl=1"
+$BackupsUrl = "https://www.dropbox.com/s/5ue798dqqgbq273/DBBackups.zip?dl=1"
 $Folder = "C:\DOWNLOAD\Backups"
 $Filename = "$Folder\dbBackups.zip"
 New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
