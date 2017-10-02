@@ -218,7 +218,7 @@ $ServersToCreate |%{
     $bakupPath = "$Folder\$($_.Backup)"
     Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
     #CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
-    CreateDevServerContainer -devContainerName $d
+    CreateDevServerContainer -devContainerName $d -devImageName 'navdocker.azurecr.io/dynamics-nav:devpreview-september'
     Copy-Item -Path "c:\myfolder\SetupNavUsers.ps1" -Destination "c:\DEMO\$d\my\SetupNavUsers.ps1"
     Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore
     Copy-Item -Path "C:\DEMO\RestartNST.ps1" -Destination "c:\DEMO\$d\my\RestartNST.ps1" -Force -ErrorAction Ignore
