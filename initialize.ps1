@@ -214,11 +214,12 @@ if (!(Test-Path $Filename)) {
 
 $ServersToCreate = Import-Csv "c:\demo\servers.csv"
 $ServersToCreate |%{
-    Start-Sleep -Seconds 120
+    
     $d = $_.Server
     $bakupPath = "$Folder\$($_.Backup)"
     Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
     CreateDevServerContainer -devContainerName $d -dbBackup $bakupPath
+    
 #    CreateDevServerContainer -devContainerName $d -devImageName 'navdocker.azurecr.io/dynamics-nav:devpreview-september'
    # Copy-Item -Path "c:\myfolder\SetupNavUsers.ps1" -Destination "c:\DEMO\$d\my\SetupNavUsers.ps1"
     Copy-Item -Path "c:\DEMO\$d\my\*.vsix" -Destination "c:\DEMO\" -Recurse -Force -ErrorAction Ignore

@@ -157,6 +157,8 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
         $dbBackupFileName = Split-Path $dbBackup -Leaf
         Copy-Item -Path $dbBackup -Destination "$myFolder\" -Recurse -Force 
     
+    Start-Sleep -Seconds 60
+
     Write-Host "Running Conainer Image $devImageName"
     $id = docker run `
                  --name $devContainerName `
@@ -201,7 +203,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     docker exec -it $devContainerName powershell "copy-item -Path 'C:\Run\*.vsix' -Destination 'C:\Run\My' -force 
     copy-item -Path 'C:\Run\*.cer' -Destination 'C:\Run\My' -force"
     
-    Start-Sleep -s 20  #waiting for files to be coppied
+    Start-Sleep -Seconds  #waiting for files to be coppied
     Write-Host "Create Desktop Shortcuts for $devContainerName"
     #$winClientFolder = (Get-Item "$programFilesFolder\*\RoleTailored Client").FullName
     $winClientFolder = "$programFilesFolder\110\RoleTailored Client"
