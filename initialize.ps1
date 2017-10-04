@@ -214,6 +214,7 @@ if (!(Test-Path $Filename)) {
 
 $ServersToCreate = Import-Csv "c:\demo\servers.csv"
 $ServersToCreate |%{
+    Start-Sleep -Seconds 120
     $d = $_.Server
     $bakupPath = "$Folder\$($_.Backup)"
     Copy-Item  -Path  "c:\myfolder\SetupCertificate.ps1" -Destination "c:\DEMO\$d\my\SetupCertificate.ps1" -Recurse -Force -ErrorAction Ignore
