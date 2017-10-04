@@ -35,7 +35,7 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 
 if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
     Log "VM already initialized."
-    exit
+    #exit
 }
 
 New-Item -Path "c:\myfolder" -ItemType Directory -ErrorAction Ignore | Out-Null
