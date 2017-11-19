@@ -52,7 +52,7 @@ New-Item "HKCU:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main"
 new-ItemProperty -Path "HKCU:\SOFTWARE\Policies\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value '00000001' -PropertyType DWORD
 
 # Do not open Server Manager At Logon
-New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force | Out-Null
+New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" -Force | Out-Null
 
 $Folder = "C:\DOWNLOAD\VSCode"
 $Filename = "$Folder\VSCodeSetup-stable.exe"
@@ -62,7 +62,7 @@ if (!(Test-Path $Filename)) {
 }
 
 Log "Installing Visual Studio Code"
-$setupParameters = “/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
+$setupParameters = "/VerySilent /CloseApplications /NoCancel /LoadInf=""c:\demo\vscode.inf"" /MERGETASKS=!runcode"
 Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
 
 Log "Download samples"
@@ -122,10 +122,36 @@ Log "Installing SQL Report Builder"
 $sqlrepbuilderURL= "https://download.microsoft.com/download/2/E/1/2E1C4993-7B72-46A4-93FF-3C3DFBB2CEE0/ENU/x86/ReportBuilder3.msi"
 $sqlrepbuilderPath = "c:\download\ReportBuilder3.msi"
 
+
 (New-Object System.Net.WebClient).DownloadFile($sqlrepbuilderURL, $sqlrepbuilderPath)
 Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlrepbuilderPath /quiet" -wait
 
+#1CF Setup GIT
+Log "Installing GIT"
+$gitUrl = "https://www.dropbox.com/s/xezrif8i2210dx3/Git-2.15.0-64-bit.exe?dl=1"
+$gitSavePath = "C:\Downloads\git.exe"
+
+DownloadFile -sourceUrl $gitUrl -destinationFile $gitSavePath
+#$commandLineGitOptions = '/Dir="G:\Git" /SetupType=default /SP- /VERYSILENT /SUPPRESSMSGBOXES /FORCECLOSEAPPLICATIONS'
+$commandLineGitOptions = '/SetupType=default /SP- /VERYSILENT /SUPPRESSMSGBOXES /FORCECLOSEAPPLICATIONS'
+Start-Process -Wait -FilePath $gitSavePath -ArgumentList $commandLineGitOptions
+
+#1CF Setup P4Merge
+Log
+Log "Installing P4Merge"
+$p4mUrl = "https://www.dropbox.com/s/yvb0xxcitew43eh/p4vinst.exe?dl=1"
+$p4mSavePath = "C:\Downloads\p4m.exe"
+
+DownloadFile -sourceUrl $p4mUrl -destinationFile $p4mSavePath
+#$commandLineMergeOptions = '/b"C:\Downloads\p4vinst64.exe" /S /V"/qn ALLUSERS=1 REBOOT=ReallySuppress"'
+$commandLineMergeOptions = '/S /V"/qn ALLUSERS=1 REBOOT=ReallySuppress"'
+Start-Process -Wait -FilePath $p4mSavePath -ArgumentList $commandLineMergeOptions
+
+
+
 #<<1CF
+
+
 
 #AC    docker exec $containerName powershell "Copy-Item -Path 'C:\DEMO\http\Default.aspx' -Destination 'C:\inetpub\wwwroot\http\Default.aspx' -Force"
 <#1CF
@@ -141,7 +167,7 @@ Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlrepbuilder
         }
         
         Log "Installing Visual Studio 2017 Enterprise"
-        $setupParameters = “--quiet --norestart"
+        $setupParameters = "--quiet --norestart"
         Start-Process -FilePath $Filename -WorkingDirectory $Folder -ArgumentList $setupParameters -Wait -Passthru | Out-Null
         
         Start-Sleep -Seconds 10
