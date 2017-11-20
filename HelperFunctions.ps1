@@ -130,7 +130,7 @@ function CreateDevServerContainer($devContainerName = "devserver", $devImageName
     RemoveDevServerContainer $devContainerName
     $locale = GetLocaleFromCountry $devCountry
 
-    'sqlcmd -d $DatabaseName -Q "update [dbo].[Object] SET [Modified] = 0"
+    '#sqlcmd -d $DatabaseName -Q "update [dbo].[Object] SET [Modified] = 0"
     ' | Set-Content -Path "$myfolder\AdditionalSetup.ps1"
 
     if (Test-Path $programFilesFolder) {
