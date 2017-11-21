@@ -250,4 +250,4 @@ if ($style -eq "workshop") {
 }
 
 
-Restart-Computer -Force
+Restart-Computer 

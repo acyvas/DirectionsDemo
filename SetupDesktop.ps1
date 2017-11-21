@@ -129,7 +129,7 @@ Start-Process "C:\Windows\System32\msiexec.exe" -argumentList "/i $sqlrepbuilder
 #1CF Setup GIT
 Log "Installing GIT"
 $gitUrl = "https://www.dropbox.com/s/xezrif8i2210dx3/Git-2.15.0-64-bit.exe?dl=1"
-$gitSavePath = "C:\Downloads\git.exe"
+$gitSavePath = "C:\Download\git.exe"
 
 DownloadFile -sourceUrl $gitUrl -destinationFile $gitSavePath
 #$commandLineGitOptions = '/Dir="G:\Git" /SetupType=default /SP- /VERYSILENT /SUPPRESSMSGBOXES /FORCECLOSEAPPLICATIONS'
@@ -137,10 +137,10 @@ $commandLineGitOptions = '/SetupType=default /SP- /VERYSILENT /SUPPRESSMSGBOXES 
 Start-Process -Wait -FilePath $gitSavePath -ArgumentList $commandLineGitOptions
 
 #1CF Setup P4Merge
-Log
+
 Log "Installing P4Merge"
 $p4mUrl = "https://www.dropbox.com/s/yvb0xxcitew43eh/p4vinst.exe?dl=1"
-$p4mSavePath = "C:\Downloads\p4m.exe"
+$p4mSavePath = "C:\Download\p4m.exe"
 
 DownloadFile -sourceUrl $p4mUrl -destinationFile $p4mSavePath
 #$commandLineMergeOptions = '/b"C:\Downloads\p4vinst64.exe" /S /V"/qn ALLUSERS=1 REBOOT=ReallySuppress"'
@@ -188,7 +188,8 @@ Get-ChildItem "C:\DEMO\*.ps1" -Force -ErrorAction Ignore| Remove-Item -Force -Er
 Get-ChildItem "C:\DEMO\*.csv" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
 Get-ChildItem "C:\DEMO\*.zip" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
 Get-ChildItem "C:\DEMO\*.txt" -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
-Get-ChildItem "C:\DEMO\*.bak" -Recurse -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore#<<1CF Cleanup
+Get-ChildItem "C:\DEMO\*.bak" -Recurse -Force -ErrorAction Ignore| Remove-Item -Force -ErrorAction Ignore
+#<<1CF Cleanup
 
 # Remove Scheduled Task
 if (Get-ScheduledTask -TaskName setupDesktop -ErrorAction Ignore) {
